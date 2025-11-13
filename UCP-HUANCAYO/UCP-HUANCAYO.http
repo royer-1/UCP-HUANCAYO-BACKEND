@@ -1,0 +1,6 @@
+@UCP_HUANCAYO_HostAddress = http://localhost:5190
+
+GET {{UCP_HUANCAYO_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

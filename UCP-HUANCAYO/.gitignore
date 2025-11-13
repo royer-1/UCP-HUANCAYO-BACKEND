@@ -1,0 +1,29 @@
+# Archivos de Visual Studio
+.vs/
+*.user
+*.suo
+
+# Archivos de compilación
+bin/
+obj/
+out/
+
+# Archivos de publicación
+publish/
+*.dbmdl
+
+# Archivos de configuración local
+appsettings.Local.json
+appsettings.Development.json
+
+# Archivos de logs y temporales
+*.log
+*.tmp
+
+# Archivos de sistema
+Thumbs.db
+Desktop.ini
+
+# Archivos de dependencias
+node_modules/
+packages/
