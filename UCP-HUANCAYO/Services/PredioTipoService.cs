@@ -23,9 +23,7 @@ namespace UCP_HUANCAYO.Services
                 {
                     IdPredioTipo = t.IdPredioTipo,
                     NombreTipo = t.NombreTipo,
-                    Contrato = t.Contrato,
-                    IdResponsable = t.IdResponsable,
-                    Activo = t.Activo
+                    Contrato = t.Contrato
                 })
                 .ToListAsync();
         }
@@ -39,14 +37,12 @@ namespace UCP_HUANCAYO.Services
                 {
                     IdPredioTipo = t.IdPredioTipo,
                     NombreTipo = t.NombreTipo,
-                    Contrato = t.Contrato,
-                    IdResponsable = t.IdResponsable,
-                    Activo = t.Activo
+                    Contrato = t.Contrato
                 })
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<PredioTipoResponseDto> CreateAsync(PredioTipoCreateDto dto)
+        public async Task<PredioTipoViewDto> CreateAsync(PredioTipoCreateDto dto)
         {
             var tipo = new PredioTipo
             {
@@ -60,7 +56,7 @@ namespace UCP_HUANCAYO.Services
             _context.PredioTipos.Add(tipo);
             await _context.SaveChangesAsync();
 
-            return new PredioTipoResponseDto
+            return new PredioTipoViewDto
             {
                 IdPredioTipo = tipo.IdPredioTipo,
                 NombreTipo = tipo.NombreTipo,
@@ -68,7 +64,7 @@ namespace UCP_HUANCAYO.Services
             };
         }
 
-        public async Task<PredioTipoResponseDto?> UpdateAsync(Guid id, PredioTipoUpdateDto dto)
+        public async Task<PredioTipoViewDto?> UpdateAsync(Guid id, PredioTipoUpdateDto dto)
         {
             var tipo = await _context.PredioTipos.FindAsync(id);
             if (tipo == null) return null;
@@ -78,7 +74,7 @@ namespace UCP_HUANCAYO.Services
 
             await _context.SaveChangesAsync();
 
-            return new PredioTipoResponseDto
+            return new PredioTipoViewDto
             {
                 IdPredioTipo = tipo.IdPredioTipo,
                 NombreTipo = tipo.NombreTipo,

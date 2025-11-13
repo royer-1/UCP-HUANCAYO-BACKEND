@@ -14,7 +14,7 @@ namespace UCP_HUANCAYO.Dtos.Contrato
         public decimal? Importe { get; set; }
         public decimal? Agua { get; set; }
         public decimal? Electricidad { get; set; }
-        public bool Activo { get; set; }
-        public Guid IdResponsable { get; set; }
+        //public bool Activo { get; set; }
+        //public Guid IdResponsable { get; set; }
     }
 }

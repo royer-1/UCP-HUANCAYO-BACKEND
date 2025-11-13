@@ -13,7 +13,7 @@ namespace UCP_HUANCAYO.Dtos.CronogramaPago
         public string? Ci { get; set; }
         public DateTime? FechaCi { get; set; }
         public string? Observacion { get; set; }
-        public bool Activo { get; set; }
-        public Guid IdResponsable { get; set; }
+        //public bool Activo { get; set; }
+        //public Guid IdResponsable { get; set; }
     }
 }

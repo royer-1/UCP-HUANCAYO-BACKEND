@@ -11,8 +11,8 @@
         public string? Direccion { get; set; }
         public string? Referencia { get; set; }
         public string? Ubigeo { get; set; }
-        public Guid IdResponsable { get; set; }
-        public bool Activo { get; set; }
+        //public Guid IdResponsable { get; set; }
+        //public bool Activo { get; set; }
 
     }
 }

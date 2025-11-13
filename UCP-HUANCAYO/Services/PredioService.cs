@@ -35,8 +35,7 @@ namespace UCP_HUANCAYO.Services
                     Ubigeo = p.Ubigeo,
                     Latitud = p.Latitud,
                     Longitud = p.Longitud,
-                    IdResponsable = p.IdResponsable,
-                    Activo = p.Activo,
+
                     Imagenes = _context.PredioImagenes
                         .Where(i => i.IdPredio == p.IdPredio)
                         .Select(i => i.Imagen!)
@@ -66,8 +65,7 @@ namespace UCP_HUANCAYO.Services
                     Ubigeo = p.Ubigeo,
                     Latitud = p.Latitud,
                     Longitud = p.Longitud,
-                    IdResponsable = p.IdResponsable,
-                    Activo = p.Activo,
+
                     Imagenes = _context.PredioImagenes
                         .Where(i => i.IdPredio == p.IdPredio)
                         .Select(i => i.Imagen!)
@@ -76,7 +74,7 @@ namespace UCP_HUANCAYO.Services
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<PredioResponseDto> CreateAsync(PredioCreateDto dto)
+        public async Task<PredioViewDto> CreateAsync(PredioCreateDto dto)
         {
             var predio = new Predio
             {
@@ -115,7 +113,7 @@ namespace UCP_HUANCAYO.Services
 
             await _context.SaveChangesAsync();
 
-            return new PredioResponseDto
+            return new PredioViewDto
             {
                 IdPredio = predio.IdPredio,
                 IdPredioTipo = predio.IdPredioTipo,
@@ -136,7 +134,7 @@ namespace UCP_HUANCAYO.Services
             };
         }
 
-        public async Task<PredioResponseDto?> PatchAsync(Guid id, PredioPatchDto dto)
+        public async Task<PredioViewDto?> PatchAsync(Guid id, PredioPatchDto dto)
         {
             var predio = await _context.Predios.FindAsync(id);
             if (predio == null) return null;
@@ -175,7 +173,7 @@ namespace UCP_HUANCAYO.Services
 
             await _context.SaveChangesAsync();
 
-            return new PredioResponseDto
+            return new PredioViewDto
             {
                 IdPredio = predio.IdPredio,
                 IdPredioTipo = predio.IdPredioTipo,
@@ -196,7 +194,7 @@ namespace UCP_HUANCAYO.Services
             };
         }
 
-        public async Task<PredioResponseDto?> UpdateAsync(Guid id, PredioUpdateDto dto)
+        public async Task<PredioViewDto?> UpdateAsync(Guid id, PredioUpdateDto dto)
         {
             var predio = await _context.Predios.FindAsync(id);
             if (predio == null) return null;
@@ -235,7 +233,7 @@ namespace UCP_HUANCAYO.Services
 
             await _context.SaveChangesAsync();
 
-            return new PredioResponseDto
+            return new PredioViewDto
             {
                 IdPredio = predio.IdPredio,
                 IdPredioTipo = predio.IdPredioTipo,

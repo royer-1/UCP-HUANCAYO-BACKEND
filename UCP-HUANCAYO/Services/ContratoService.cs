@@ -58,9 +58,7 @@ namespace UCP_HUANCAYO.Services
                     Tiempo = c.Tiempo,
                     Importe = c.Importe,
                     Agua = c.Agua,
-                    Electricidad = c.Electricidad,
-                    Activo = c.Activo,
-                    IdResponsable = c.IdResponsable
+                    Electricidad = c.Electricidad
                 })
                 .ToListAsync();
         }
@@ -85,9 +83,7 @@ namespace UCP_HUANCAYO.Services
                     FechaOrden = c.FechaOrden,
                     Ci = c.Ci,
                     FechaCi = c.FechaCi,
-                    Observacion = c.Observacion,
-                    Activo = c.Activo,
-                    IdResponsable = c.IdResponsable
+                    Observacion = c.Observacion
                 })
                 .ToList();
 
@@ -103,13 +99,12 @@ namespace UCP_HUANCAYO.Services
                 Importe = contrato.Importe,
                 Agua = contrato.Agua,
                 Electricidad = contrato.Electricidad,
-                Activo = contrato.Activo,
-                IdResponsable = contrato.IdResponsable,
+
                 Cronogramas = cronogramasDto
             };
         }
 
-        public async Task<ContratoResponseDto?> CreateAsync(ContratoCreateDto dto)
+        public async Task<ContratoViewDto?> CreateAsync(ContratoCreateDto dto)
         {
             var predio = await _context.Predios
                 .Include(p => p.PredioTipo)
@@ -143,7 +138,7 @@ namespace UCP_HUANCAYO.Services
             _context.Contratos.Add(contrato);
             await _context.SaveChangesAsync();
 
-            return new ContratoResponseDto
+            return new ContratoViewDto
             {
                 IdContrato = contrato.IdContrato,
                 IdPredio = contrato.IdPredio,
@@ -158,7 +153,7 @@ namespace UCP_HUANCAYO.Services
             };
         }
 
-        public async Task<ContratoResponseDto?> PatchAsync(Guid id, ContratoPatchDto dto)
+        public async Task<ContratoViewDto?> PatchAsync(Guid id, ContratoPatchDto dto)
         {
             var contrato = await _context.Contratos
                 .Include(c => c.CronogramasPago)
@@ -179,7 +174,7 @@ namespace UCP_HUANCAYO.Services
 
             await _context.SaveChangesAsync();
 
-            return new ContratoResponseDto
+            return new ContratoViewDto
             {
                 IdContrato = contrato.IdContrato,
                 IdPredio = contrato.IdPredio,
@@ -194,7 +189,7 @@ namespace UCP_HUANCAYO.Services
             };
         }
 
-        public async Task<ContratoResponseDto?> UpdateAsync(Guid id, ContratoUpdateDto dto)
+        public async Task<ContratoViewDto?> UpdateAsync(Guid id, ContratoUpdateDto dto)
         {
             var contrato = await _context.Contratos
                 .Include(c => c.CronogramasPago)
@@ -215,7 +210,7 @@ namespace UCP_HUANCAYO.Services
 
             await _context.SaveChangesAsync();
 
-            return new ContratoResponseDto
+            return new ContratoViewDto
             {
                 IdContrato = contrato.IdContrato,
                 IdPredio = contrato.IdPredio,

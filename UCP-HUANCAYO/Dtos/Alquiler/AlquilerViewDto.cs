@@ -6,8 +6,8 @@ namespace UCP_HUANCAYO.Dtos.Alquiler
     {
         public Guid IdAlquiler { get; set; }
         public Guid IdPredio { get; set; }
-        public string? NombrePredio { get; set; }
         public Guid IdAdministrado { get; set; }
+        public string? NombrePredio { get; set; }
         public DateTime PeriodoDesde { get; set; }
         public DateTime PeriodoHasta { get; set; }
         public decimal Costo { get; set; }
@@ -16,7 +16,7 @@ namespace UCP_HUANCAYO.Dtos.Alquiler
         public string? Ci { get; set; }
         public DateTime? FechaCi { get; set; }
         public string? Observacion { get; set; }
-        public bool Activo { get; set; }
-        public Guid IdResponsable { get; set; }
+        //public bool Activo { get; set; }
+        //public Guid IdResponsable { get; set; }
     }
 }

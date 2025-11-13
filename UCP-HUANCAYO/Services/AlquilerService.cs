@@ -33,9 +33,7 @@ namespace UCP_HUANCAYO.Services
                     FechaOrden = a.FechaOrden,
                     Ci = a.Ci,
                     FechaCi = a.FechaCi,
-                    Observacion = a.Observacion,
-                    Activo = a.Activo,
-                    IdResponsable = a.IdResponsable
+                    Observacion = a.Observacion
                 })
                 .ToListAsync();
         }
@@ -59,14 +57,12 @@ namespace UCP_HUANCAYO.Services
                     FechaOrden = a.FechaOrden,
                     Ci = a.Ci,
                     FechaCi = a.FechaCi,
-                    Observacion = a.Observacion,
-                    Activo = a.Activo,
-                    IdResponsable = a.IdResponsable
+                    Observacion = a.Observacion
                 })
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<AlquilerResponseDto> CreateAsync(AlquilerCreateDto dto)
+        public async Task<AlquilerViewDto> CreateAsync(AlquilerCreateDto dto)
         {
             int siguienteOrden = await _context.Alquileres.CountAsync() + 1;
 
@@ -90,7 +86,7 @@ namespace UCP_HUANCAYO.Services
             _context.Alquileres.Add(alquiler);
             await _context.SaveChangesAsync();
 
-            return new AlquilerResponseDto
+            return new AlquilerViewDto
             {
                 IdAlquiler = alquiler.IdAlquiler,
                 IdPredio = alquiler.IdPredio,
@@ -106,7 +102,7 @@ namespace UCP_HUANCAYO.Services
             };
         }
 
-        public async Task<AlquilerResponseDto?> PatchAsync(Guid id, AlquilerPatchDto dto)
+        public async Task<AlquilerViewDto?> PatchAsync(Guid id, AlquilerPatchDto dto)
         {
             var alquiler = await _context.Alquileres.FindAsync(id);
             if (alquiler == null) return null;
@@ -120,7 +116,7 @@ namespace UCP_HUANCAYO.Services
 
             await _context.SaveChangesAsync();
 
-            return new AlquilerResponseDto
+            return new AlquilerViewDto
             {
                 IdAlquiler = alquiler.IdAlquiler,
                 IdPredio = alquiler.IdPredio,
@@ -136,7 +132,7 @@ namespace UCP_HUANCAYO.Services
             };
         }
 
-        public async Task<AlquilerResponseDto?> UpdateAsync(Guid id, AlquilerUpdateDto dto)
+        public async Task<AlquilerViewDto?> UpdateAsync(Guid id, AlquilerUpdateDto dto)
         {
             var alquiler = await _context.Alquileres.FindAsync(id);
             if (alquiler == null) return null;
@@ -152,7 +148,7 @@ namespace UCP_HUANCAYO.Services
 
             await _context.SaveChangesAsync();
 
-            return new AlquilerResponseDto
+            return new AlquilerViewDto
             {
                 IdAlquiler = alquiler.IdAlquiler,
                 IdPredio = alquiler.IdPredio,

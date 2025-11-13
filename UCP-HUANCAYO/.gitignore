@@ -27,3 +27,6 @@ Desktop.ini
 # Archivos de dependencias
 node_modules/
 packages/
+
+
+.env

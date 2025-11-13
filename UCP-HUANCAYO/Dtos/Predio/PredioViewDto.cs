@@ -15,8 +15,8 @@
         public string? Ubigeo { get; set; }
         public string? Latitud { get; set; }
         public string? Longitud { get; set; }
-        public Guid IdResponsable { get; set; }
-        public bool Activo { get; set; }
+        //public Guid IdResponsable { get; set; }
+        //public bool Activo { get; set; }
         public List<string>? Imagenes { get; set; }
     }
 }

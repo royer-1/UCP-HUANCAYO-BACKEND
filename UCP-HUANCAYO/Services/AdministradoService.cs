@@ -30,9 +30,7 @@ namespace UCP_HUANCAYO.Services
                     Correo = a.Correo != null ? Encoding.UTF8.GetString(a.Correo) : null,
                     Direccion = a.Direccion,
                     Referencia = a.Referencia,
-                    Ubigeo = a.Ubigeo,
-                    IdResponsable = a.IdResponsable,
-                    Activo = a.Activo
+                    Ubigeo = a.Ubigeo
                 })
                 .ToListAsync();
         }
@@ -52,14 +50,12 @@ namespace UCP_HUANCAYO.Services
                     Correo = a.Correo != null ? Encoding.UTF8.GetString(a.Correo) : null,
                     Direccion = a.Direccion,
                     Referencia = a.Referencia,
-                    Ubigeo = a.Ubigeo,
-                    IdResponsable = a.IdResponsable,
-                    Activo = a.Activo
+                    Ubigeo = a.Ubigeo
                 })
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<AdministradoResponseDto> CreateAsync(AdministradoCreateDto dto)
+        public async Task<AdministradoViewDto> CreateAsync(AdministradoCreateDto dto)
         {
             var administrado = new Administrado
             {
@@ -79,7 +75,7 @@ namespace UCP_HUANCAYO.Services
             _context.Administrados.Add(administrado);
             await _context.SaveChangesAsync();
 
-            return new AdministradoResponseDto
+            return new AdministradoViewDto
             {
                 IdAdministrado = administrado.IdAdministrado,
                 DocIdentTipo = administrado.DocIdentTipo,
@@ -93,7 +89,7 @@ namespace UCP_HUANCAYO.Services
             };
         }
 
-        public async Task<AdministradoResponseDto?> PatchAsync(Guid id, AdministradoPatchDto dto)
+        public async Task<AdministradoViewDto?> PatchAsync(Guid id, AdministradoPatchDto dto)
         {
             var administrado = await _context.Administrados.FindAsync(id);
             if (administrado == null) return null;
@@ -107,7 +103,7 @@ namespace UCP_HUANCAYO.Services
 
             await _context.SaveChangesAsync();
 
-            return new AdministradoResponseDto
+            return new AdministradoViewDto
             {
                 IdAdministrado = administrado.IdAdministrado,
                 DocIdentTipo = administrado.DocIdentTipo,
@@ -121,7 +117,7 @@ namespace UCP_HUANCAYO.Services
             };
         }
 
-        public async Task<AdministradoResponseDto?> UpdateAsync(Guid id, AdministradoUpdateDto dto)
+        public async Task<AdministradoViewDto?> UpdateAsync(Guid id, AdministradoUpdateDto dto)
         {
             var administrado = await _context.Administrados.FindAsync(id);
             if (administrado == null) return null;
@@ -137,7 +133,7 @@ namespace UCP_HUANCAYO.Services
 
             await _context.SaveChangesAsync();
 
-            return new AdministradoResponseDto
+            return new AdministradoViewDto
             {
                 IdAdministrado = administrado.IdAdministrado,
                 DocIdentTipo = administrado.DocIdentTipo,

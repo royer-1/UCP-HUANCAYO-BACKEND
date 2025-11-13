@@ -29,9 +29,7 @@ namespace UCP_HUANCAYO.Services
                     FechaOrden = c.FechaOrden,
                     Ci = c.Ci,
                     FechaCi = c.FechaCi,
-                    Observacion = c.Observacion,
-                    Activo = c.Activo,
-                    IdResponsable = c.IdResponsable
+                    Observacion = c.Observacion
                 })
                 .ToListAsync();
         }
@@ -54,13 +52,11 @@ namespace UCP_HUANCAYO.Services
                 FechaOrden = cronograma.FechaOrden,
                 Ci = cronograma.Ci,
                 FechaCi = cronograma.FechaCi,
-                Observacion = cronograma.Observacion,
-                Activo = cronograma.Activo,
-                IdResponsable = cronograma.IdResponsable
+                Observacion = cronograma.Observacion
             };
         }
 
-        public async Task<CronogramaPagoResponseDto?> CreateAsync(CronogramaPagoCreateDto dto)
+        public async Task<CronogramaPagoViewDto?> CreateAsync(CronogramaPagoCreateDto dto)
         {
             var contrato = await _context.Contratos
                 .Include(c => c.CronogramasPago)
@@ -90,7 +86,7 @@ namespace UCP_HUANCAYO.Services
 
             await _context.SaveChangesAsync();
 
-            return new CronogramaPagoResponseDto
+            return new CronogramaPagoViewDto
             {
                 IdCronograma = nuevoCronograma.IdCronograma,
                 IdContrato = nuevoCronograma.IdContrato,
@@ -104,7 +100,7 @@ namespace UCP_HUANCAYO.Services
             };
         }
 
-        public async Task<CronogramaPagoResponseDto?> PatchAsync(Guid id, CronogramaPagoPatchDto dto)
+        public async Task<CronogramaPagoViewDto?> PatchAsync(Guid id, CronogramaPagoPatchDto dto)
         {
             var cronograma = await _context.CronogramaPagos.FindAsync(id);
             if (cronograma == null || !cronograma.Activo) return null;
@@ -118,7 +114,7 @@ namespace UCP_HUANCAYO.Services
 
             await _context.SaveChangesAsync();
 
-            return new CronogramaPagoResponseDto
+            return new CronogramaPagoViewDto
             {
                 IdCronograma = cronograma.IdCronograma,
                 IdContrato = cronograma.IdContrato,
@@ -132,7 +128,7 @@ namespace UCP_HUANCAYO.Services
             };
         }
 
-        public async Task<CronogramaPagoResponseDto?> UpdateAsync(Guid id, CronogramaPagoUpdateDto dto)
+        public async Task<CronogramaPagoViewDto?> UpdateAsync(Guid id, CronogramaPagoUpdateDto dto)
         {
             var cronograma = await _context.CronogramaPagos.FindAsync(id);
             if (cronograma == null || !cronograma.Activo) return null;
@@ -146,7 +142,7 @@ namespace UCP_HUANCAYO.Services
 
             await _context.SaveChangesAsync();
 
-            return new CronogramaPagoResponseDto
+            return new CronogramaPagoViewDto
             {
                 IdCronograma = cronograma.IdCronograma,
                 IdContrato = cronograma.IdContrato,
