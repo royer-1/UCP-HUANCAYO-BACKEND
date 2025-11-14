@@ -49,7 +49,7 @@ namespace UCP_HUANCAYO.Controllers
         public async Task<ActionResult> Update(Guid id, AdministradoUpdateDto dto)
         {
             var result = await _service.UpdateAsync(id, dto);
-            if (result == null) return NotFound();
+            if (result == null) return NotFound();  
             return Ok(new { message = "El Administrado se actualizado correctamente", administrado = result });
         }
 

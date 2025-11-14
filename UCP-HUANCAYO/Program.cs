@@ -2,10 +2,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UCP_HUANCAYO.Data;
 using UCP_HUANCAYO.Dtos.Common;
+using UCP_HUANCAYO.Helpers;
 using UCP_HUANCAYO.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+//servicios de negocio
 builder.Services.AddScoped<AdministradoService>();
 builder.Services.AddScoped<AlquilerService>();
 builder.Services.AddScoped<ContratoService>();
@@ -13,12 +15,21 @@ builder.Services.AddScoped<CronogramaPagoService>();
 builder.Services.AddScoped<PredioService>();
 builder.Services.AddScoped<PredioImagenService>();
 builder.Services.AddScoped<PredioTipoService>();
+builder.Services.AddScoped<UsuarioService>();
+builder.Services.AddScoped<TokenService>();
+builder.Services.AddScoped<DominioService>();
+builder.Services.AddScoped<AuditoriaService>();
 
+//Helpers
+builder.Services.AddScoped<AuditoriaHelper>();
+builder.Services.AddHttpContextAccessor();
+
+//DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 
-// Add services to the container.
+// API y Swagger
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -43,6 +54,7 @@ app.MapControllers();
 app.Run();
 
 
+// manejo de errores de validacion
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.InvalidModelStateResponseFactory = context =>

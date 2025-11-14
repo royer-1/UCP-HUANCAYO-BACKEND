@@ -17,6 +17,10 @@ namespace UCP_HUANCAYO.Data
         public DbSet<Alquiler> Alquileres { get; set; }
         public DbSet<Contrato> Contratos { get; set; }
         public DbSet<CronogramaPago> CronogramaPagos { get; set; }
+        public DbSet<Usuario> Usuarios { get; set; }
+        public DbSet<Dominio> Dominios { get; set; }
+        public DbSet<Token> Tokens { get; set; }
+        public DbSet<Auditoria> Auditorias { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -54,6 +58,26 @@ namespace UCP_HUANCAYO.Data
                 .HasOne(a => a.Administrado)
                 .WithMany()
                 .HasForeignKey(a => a.IdAdministrado);
+
+            modelBuilder.Entity<Usuario>()
+                .HasOne<Dominio>()
+                .WithMany()
+                .HasForeignKey(u => u.IdDominio);
+
+            modelBuilder.Entity<Usuario>()
+                .HasOne(u => u.Dominio)
+                .WithMany()
+                .HasForeignKey(u => u.IdDominio);
+
+            modelBuilder.Entity<Token>()
+                .HasOne(t => t.Usuario)
+                .WithMany()
+                .HasForeignKey(t => t.IdUsuario);
+
+            modelBuilder.Entity<Auditoria>()
+                .HasOne(a => a.Usuario)
+                .WithMany()
+                .HasForeignKey(a => a.IdUsuario);
         }
 
     }
