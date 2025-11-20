@@ -33,7 +33,8 @@ namespace UCP_HUANCAYO.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(PredioImagenCreateDto dto)
         {
-            var result = await _service.CreateAsync(dto);
+            var usuarioActual = Guid.NewGuid();
+            var result = await _service.CreateAsync(dto, usuarioActual);
             if (result == null) return NotFound("Predio no encontrado.");
             return Ok(new { message = "Imagen agregada correctamente", imagen = result });
         }
@@ -41,7 +42,8 @@ namespace UCP_HUANCAYO.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, PredioImagenUpdateDto dto)
         {
-            var result = await _service.UpdateAsync(id, dto);
+            var usuarioActual = Guid.NewGuid();
+            var result = await _service.UpdateAsync(id, dto, usuarioActual);
             if (result == null) return NotFound();
             return Ok(new { message = "Imagen actualizada correctamente", imagen = result });
         }
@@ -49,7 +51,8 @@ namespace UCP_HUANCAYO.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Desactivar(Guid id)
         {
-            var success = await _service.DesactivarAsync(id);
+            var usuarioActual = Guid.NewGuid();
+            var success = await _service.DesactivarAsync(id, usuarioActual);
             if (!success) return NotFound();
             return Ok(new { message = "Imagen desactivada correctamente." });
         }

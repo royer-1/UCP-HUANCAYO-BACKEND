@@ -33,6 +33,10 @@ namespace UCP_HUANCAYO.Dtos.Usuario
         public string Clave { get; set; } = string.Empty;
 
         [Required]
+        [StringLength(50)]
+        public string Rol { get; set; } = string.Empty;
+
+        [Required]
         public Guid IdResponsable { get; set; }
     }
 }

@@ -1,6 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using UCP_HUANCAYO.Data;
 using UCP_HUANCAYO.Dtos.Contrato;
+using UCP_HUANCAYO.Helpers;
 using UCP_HUANCAYO.Models;
 
 namespace UCP_HUANCAYO.Services
@@ -8,10 +10,14 @@ namespace UCP_HUANCAYO.Services
     public class ContratoService
     {
         private readonly ApplicationDbContext _context;
+        private readonly AuditoriaHelper _auditoriaHelper;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public ContratoService(ApplicationDbContext context)
+        public ContratoService(ApplicationDbContext context, AuditoriaHelper auditoriaHelper, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
+            _auditoriaHelper = auditoriaHelper;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         private List<CronogramaPago> GenerarCronogramaPagos(Guid idContrato, DateTime fechaInicio, int tiempo, Guid idResponsable)
@@ -104,7 +110,7 @@ namespace UCP_HUANCAYO.Services
             };
         }
 
-        public async Task<ContratoViewDto?> CreateAsync(ContratoCreateDto dto)
+        public async Task<ContratoViewDto?> CreateAsync(ContratoCreateDto dto, Guid usuarioActual)
         {
             var predio = await _context.Predios
                 .Include(p => p.PredioTipo)
@@ -138,6 +144,18 @@ namespace UCP_HUANCAYO.Services
             _context.Contratos.Add(contrato);
             await _context.SaveChangesAsync();
 
+            var context = _httpContextAccessor.HttpContext!;
+            var detalle = AuditoriaDetalleHelper.GenerarDetalle(contrato, "Contrato creado");
+
+            await _auditoriaHelper.RegistrarDesdeContextoAsync(
+                tabla: "contrato",
+                idRegistro: contrato.IdContrato,
+                accion: "INSERT",
+                detalle: detalle,
+                idUsuario: usuarioActual,
+                context: context
+            );
+
             return new ContratoViewDto
             {
                 IdContrato = contrato.IdContrato,
@@ -153,7 +171,7 @@ namespace UCP_HUANCAYO.Services
             };
         }
 
-        public async Task<ContratoViewDto?> PatchAsync(Guid id, ContratoPatchDto dto)
+        public async Task<ContratoViewDto?> PatchAsync(Guid id, ContratoPatchDto dto, Guid usuarioActual)
         {
             var contrato = await _context.Contratos
                 .Include(c => c.CronogramasPago)
@@ -166,6 +184,22 @@ namespace UCP_HUANCAYO.Services
                 .All(c => !string.IsNullOrEmpty(c.Ci) && c.FechaCi != null);
 
             if (contratoPagado) return null;
+
+            var contratoAntes = new Contrato
+            {
+                IdContrato = contrato.IdContrato,
+                IdPredio = contrato.IdPredio,
+                IdAdministrado = contrato.IdAdministrado,
+                Periodo = contrato.Periodo,
+                Numero = contrato.Numero,
+                FechaInicia = contrato.FechaInicia,
+                Tiempo = contrato.Tiempo,
+                Importe = contrato.Importe,
+                Agua = contrato.Agua,
+                Electricidad = contrato.Electricidad,
+                Activo = contrato.Activo,
+                IdResponsable = contrato.IdResponsable
+            };
 
             if (dto.FechaInicia.HasValue) contrato.FechaInicia = dto.FechaInicia.Value;
             if (dto.Importe.HasValue) contrato.Importe = dto.Importe.Value;
@@ -174,6 +208,18 @@ namespace UCP_HUANCAYO.Services
 
             await _context.SaveChangesAsync();
 
+            var context = _httpContextAccessor.HttpContext!;
+            var detalle = AuditoriaDetalleHelper.GenerarCambios(contratoAntes, contrato, "Contrato actualizado parcialmente");
+
+            await _auditoriaHelper.RegistrarDesdeContextoAsync(
+                tabla: "contrato",
+                idRegistro: contrato.IdContrato,
+                accion: "PATCH",
+                detalle: detalle,
+                idUsuario: usuarioActual,
+                context: context
+            );
+
             return new ContratoViewDto
             {
                 IdContrato = contrato.IdContrato,
@@ -189,7 +235,7 @@ namespace UCP_HUANCAYO.Services
             };
         }
 
-        public async Task<ContratoViewDto?> UpdateAsync(Guid id, ContratoUpdateDto dto)
+        public async Task<ContratoViewDto?> UpdateAsync(Guid id, ContratoUpdateDto dto, Guid usuarioActual)
         {
             var contrato = await _context.Contratos
                 .Include(c => c.CronogramasPago)
@@ -203,12 +249,40 @@ namespace UCP_HUANCAYO.Services
 
             if (contratoPagado) return null;
 
+            var contratoAntes = new Contrato
+            {
+                IdContrato = contrato.IdContrato,
+                IdPredio = contrato.IdPredio,
+                IdAdministrado = contrato.IdAdministrado,
+                Periodo = contrato.Periodo,
+                Numero = contrato.Numero,
+                FechaInicia = contrato.FechaInicia,
+                Tiempo = contrato.Tiempo,
+                Importe = contrato.Importe,
+                Agua = contrato.Agua,
+                Electricidad = contrato.Electricidad,
+                Activo = contrato.Activo,
+                IdResponsable = contrato.IdResponsable
+            };
+
             contrato.FechaInicia = dto.FechaInicia;
             contrato.Importe = dto.Importe;
             contrato.Agua = dto.Agua;
             contrato.Electricidad = dto.Electricidad;
 
             await _context.SaveChangesAsync();
+
+            var context = _httpContextAccessor.HttpContext!;
+            var detalle = AuditoriaDetalleHelper.GenerarCambios(contratoAntes, contrato, "Contrato actualizado");
+
+            await _auditoriaHelper.RegistrarDesdeContextoAsync(
+                tabla: "contrato",
+                idRegistro: contrato.IdContrato,
+                accion: "UPDATE",
+                detalle: detalle,
+                idUsuario: usuarioActual,
+                context: context
+            );
 
             return new ContratoViewDto
             {
@@ -225,7 +299,7 @@ namespace UCP_HUANCAYO.Services
             };
         }
 
-        public async Task<bool> DesactivarAsync(Guid id)
+        public async Task<bool> DesactivarAsync(Guid id, Guid usuarioActual)
         {
             var contrato = await _context.Contratos
                 .Include(c => c.CronogramasPago)
@@ -240,11 +314,21 @@ namespace UCP_HUANCAYO.Services
             }
 
             await _context.SaveChangesAsync();
+
+            var context = _httpContextAccessor.HttpContext!;
+            await _auditoriaHelper.RegistrarDesdeContextoAsync(
+                tabla: "Contrato",
+                idRegistro: contrato.IdContrato,
+                accion: "DELETE",
+                detalle: "Contrato desactivado (Activo=false)",
+                idUsuario: usuarioActual,
+                context: context
+            );
+
             return true;
         }
 
-        public async Task<(List<ContratoFilterDto> Items, int TotalCount)> GetPagedAsync(
-    int page, int pageSize, ContratoFilterDto filters)
+        public async Task<(List<ContratoFilterDto> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, ContratoFilterDto filters)
         {
             var query = _context.Contratos
                 .Include(c => c.Administrado)

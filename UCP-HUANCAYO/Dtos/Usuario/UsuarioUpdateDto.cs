@@ -31,5 +31,9 @@ namespace UCP_HUANCAYO.Dtos.Usuario
 
         [Required]
         public string Clave { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(50)]
+        public string Rol { get; set; } = string.Empty;
     }
 }

@@ -1,6 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using UCP_HUANCAYO.Data;
 using UCP_HUANCAYO.Dtos.Predio;
+using UCP_HUANCAYO.Helpers;
 using UCP_HUANCAYO.Models;
 
 namespace UCP_HUANCAYO.Services
@@ -8,10 +10,14 @@ namespace UCP_HUANCAYO.Services
     public class PredioService
     {
         private readonly ApplicationDbContext _context;
+        private readonly AuditoriaHelper _auditoriaHelper;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public PredioService(ApplicationDbContext context)
+        public PredioService(ApplicationDbContext context, AuditoriaHelper auditoriaHelper, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
+            _auditoriaHelper = auditoriaHelper;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<IEnumerable<PredioViewDto>> GetAllAsync()
@@ -74,7 +80,7 @@ namespace UCP_HUANCAYO.Services
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<PredioViewDto> CreateAsync(PredioCreateDto dto)
+        public async Task<PredioViewDto> CreateAsync(PredioCreateDto dto, Guid usuarioActual)
         {
             var predio = new Predio
             {
@@ -113,6 +119,18 @@ namespace UCP_HUANCAYO.Services
 
             await _context.SaveChangesAsync();
 
+            var context = _httpContextAccessor.HttpContext!;
+            var detalle = AuditoriaDetalleHelper.GenerarDetalle(predio, "Predio creado");
+
+            await _auditoriaHelper.RegistrarDesdeContextoAsync(
+                tabla: "predio",
+                idRegistro: predio.IdPredio,
+                accion: "INSERT",
+                detalle: detalle,
+                idUsuario: usuarioActual,
+                context: context
+            );
+
             return new PredioViewDto
             {
                 IdPredio = predio.IdPredio,
@@ -134,10 +152,28 @@ namespace UCP_HUANCAYO.Services
             };
         }
 
-        public async Task<PredioViewDto?> PatchAsync(Guid id, PredioPatchDto dto)
+        public async Task<PredioViewDto?> PatchAsync(Guid id, PredioPatchDto dto, Guid usuarioActual)
         {
             var predio = await _context.Predios.FindAsync(id);
             if (predio == null) return null;
+
+            var predioAntes = new Predio
+            {
+                IdPredio = predio.IdPredio,
+                IdPredioTipo = predio.IdPredioTipo,
+                NombrePredio = predio.NombrePredio,
+                Descripcion = predio.Descripcion,
+                AreaPredio = predio.AreaPredio,
+                Capacidad = predio.Capacidad,
+                RegistroAgua = predio.RegistroAgua,
+                RegistroLuz = predio.RegistroLuz,
+                Direccion = predio.Direccion,
+                Ubigeo = predio.Ubigeo,
+                Latitud = predio.Latitud,
+                Longitud = predio.Longitud,
+                Activo = predio.Activo,
+                IdResponsable = predio.IdResponsable
+            };
 
             if (dto.NombrePredio != null) predio.NombrePredio = dto.NombrePredio;
             if (dto.Descripcion != null) predio.Descripcion = dto.Descripcion;
@@ -173,6 +209,18 @@ namespace UCP_HUANCAYO.Services
 
             await _context.SaveChangesAsync();
 
+            var context = _httpContextAccessor.HttpContext!;
+            var detalle = AuditoriaDetalleHelper.GenerarCambios(predioAntes, predio, "Predio actualizado parcialmente");
+
+            await _auditoriaHelper.RegistrarDesdeContextoAsync(
+                tabla: "predio",
+                idRegistro: predio.IdPredio,
+                accion: "PATCH",
+                detalle: detalle,
+                idUsuario: usuarioActual,
+                context: context
+            );
+
             return new PredioViewDto
             {
                 IdPredio = predio.IdPredio,
@@ -194,10 +242,28 @@ namespace UCP_HUANCAYO.Services
             };
         }
 
-        public async Task<PredioViewDto?> UpdateAsync(Guid id, PredioUpdateDto dto)
+        public async Task<PredioViewDto?> UpdateAsync(Guid id, PredioUpdateDto dto, Guid usuarioActual)
         {
             var predio = await _context.Predios.FindAsync(id);
             if (predio == null) return null;
+
+            var predioAntes = new Predio
+            {
+                IdPredio = predio.IdPredio,
+                IdPredioTipo = predio.IdPredioTipo,
+                NombrePredio = predio.NombrePredio,
+                Descripcion = predio.Descripcion,
+                AreaPredio = predio.AreaPredio,
+                Capacidad = predio.Capacidad,
+                RegistroAgua = predio.RegistroAgua,
+                RegistroLuz = predio.RegistroLuz,
+                Direccion = predio.Direccion,
+                Ubigeo = predio.Ubigeo,
+                Latitud = predio.Latitud,
+                Longitud = predio.Longitud,
+                Activo = predio.Activo,
+                IdResponsable = predio.IdResponsable
+            };
 
             predio.NombrePredio = dto.NombrePredio;
             predio.Descripcion = string.IsNullOrWhiteSpace(dto.Descripcion) ? null : dto.Descripcion;
@@ -233,6 +299,18 @@ namespace UCP_HUANCAYO.Services
 
             await _context.SaveChangesAsync();
 
+            var context = _httpContextAccessor.HttpContext!;
+            var detalle = AuditoriaDetalleHelper.GenerarCambios(predioAntes, predio, "Predio actualizado");
+
+            await _auditoriaHelper.RegistrarDesdeContextoAsync(
+                tabla: "predio",
+                idRegistro: predio.IdPredio,
+                accion: "UPDATE",
+                detalle: detalle,
+                idUsuario: usuarioActual,
+                context: context
+            );
+
             return new PredioViewDto
             {
                 IdPredio = predio.IdPredio,
@@ -254,7 +332,7 @@ namespace UCP_HUANCAYO.Services
             };
         }
 
-        public async Task<bool> DesactivarAsync(Guid id)
+        public async Task<bool> DesactivarAsync(Guid id, Guid usuarioActual)
         {
             var predio = await _context.Predios
                 .Include(p => p.Imagenes)
@@ -270,6 +348,17 @@ namespace UCP_HUANCAYO.Services
             }
 
             await _context.SaveChangesAsync();
+
+            var context = _httpContextAccessor.HttpContext!;
+            await _auditoriaHelper.RegistrarDesdeContextoAsync(
+                tabla: "predio",
+                idRegistro: predio.IdPredio,
+                accion: "DELETE",
+                detalle: "Predio desactivado (Activo=false, imágenes desactivadas)",
+                idUsuario: usuarioActual,
+                context: context
+            );
+
             return true;
         }
     }

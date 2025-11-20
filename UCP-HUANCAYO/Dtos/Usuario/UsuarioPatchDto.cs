@@ -18,5 +18,8 @@ namespace UCP_HUANCAYO.Dtos.Usuario
         public string? Telefono { get; set; }
 
         public string? Clave { get; set; }
+
+        [StringLength(50)]
+        public string? Rol { get; set; }
     }
 }

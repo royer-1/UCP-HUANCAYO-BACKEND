@@ -33,14 +33,16 @@ namespace UCP_HUANCAYO.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(PredioTipoCreateDto dto)
         {
-            var result = await _service.CreateAsync(dto);
+            var usuarioActual = Guid.NewGuid();
+            var result = await _service.CreateAsync(dto, usuarioActual);
             return Ok(new { message = "Tipo de predio creado correctamente", tipo = result });
         }
 
         [HttpPut("{id}")]
         public async Task<ActionResult> Update(Guid id, PredioTipoUpdateDto dto)
         {
-            var result = await _service.UpdateAsync(id, dto);
+            var usuarioActual = Guid.NewGuid();
+            var result = await _service.UpdateAsync(id, dto, usuarioActual);
             if (result == null) return NotFound();
             return Ok(new { message = "El Tipo de predio fue actualizado correctamente", tipo = result });
         }
@@ -48,7 +50,8 @@ namespace UCP_HUANCAYO.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult> Desactivar(Guid id)
         {
-            var success = await _service.DesactivarAsync(id);
+            var usuarioActual = Guid.NewGuid();
+            var success = await _service.DesactivarAsync(id, usuarioActual);
             if (!success) return NotFound();
             return Ok(new { message = "El Tipo de Predio fue desactivado correctamente." });
         }

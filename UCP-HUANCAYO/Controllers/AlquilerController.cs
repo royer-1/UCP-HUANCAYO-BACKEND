@@ -33,14 +33,16 @@ namespace UCP_HUANCAYO.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(AlquilerCreateDto dto)
         {
-            var result = await _service.CreateAsync(dto);
+            var usuarioActual = Guid.NewGuid();
+            var result = await _service.CreateAsync(dto, usuarioActual);
             return Ok(new { message = "El alquiler fue creado correctamente", alquiler = result });
         }
 
         [HttpPatch("{id}")]
         public async Task<IActionResult> Patch(Guid id, AlquilerPatchDto dto)
         {
-            var result = await _service.PatchAsync(id, dto);
+            var usuarioActual = Guid.NewGuid();
+            var result = await _service.PatchAsync(id, dto, usuarioActual);
             if (result == null) return NotFound();
             return Ok(new { message = "El alquiler fue actualizado parcialmente", alquiler = result });
         }
@@ -48,7 +50,8 @@ namespace UCP_HUANCAYO.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, AlquilerUpdateDto dto)
         {
-            var result = await _service.UpdateAsync(id, dto);
+            var usuarioActual = Guid.NewGuid();
+            var result = await _service.UpdateAsync(id, dto, usuarioActual);
             if (result == null) return NotFound();
             return Ok(new { message = "El alquiler fue actualizado correctamente", alquiler = result });
         }
@@ -56,7 +59,8 @@ namespace UCP_HUANCAYO.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Desactivar(Guid id)
         {
-            var success = await _service.DesactivarAsync(id);
+            var usuarioActual = Guid.NewGuid();
+            var success = await _service.DesactivarAsync(id, usuarioActual);
             if (!success) return NotFound();
             return Ok(new { message = "El alquiler fue desactivado correctamente." });
         }

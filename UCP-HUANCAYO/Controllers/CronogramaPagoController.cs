@@ -36,7 +36,8 @@ namespace UCP_HUANCAYO.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(CronogramaPagoCreateDto dto)
         {
-            var result = await _service.CreateAsync(dto);
+            var usuarioActual = Guid.NewGuid();
+            var result = await _service.CreateAsync(dto, usuarioActual);
             if (result == null) return BadRequest("Contrato no encontrado o inactivo.");
             return Ok(new { message = "Cronograma creado correctamente", cronograma = result });
         }
@@ -44,7 +45,8 @@ namespace UCP_HUANCAYO.Controllers
         [HttpPatch("{id}")]
         public async Task<IActionResult> Patch(Guid id, CronogramaPagoPatchDto dto)
         {
-            var result = await _service.PatchAsync(id, dto);
+            var usuarioActual = Guid.NewGuid();
+            var result = await _service.PatchAsync(id, dto, usuarioActual);
             if (result == null) return BadRequest("Este cronograma ya fue pagado y no puede ser editado.");
             return Ok(new { message = "Cronograma actualizado parcialmente", cronograma = result });
         }
@@ -52,7 +54,8 @@ namespace UCP_HUANCAYO.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, CronogramaPagoUpdateDto dto)
         {
-            var result = await _service.UpdateAsync(id, dto);
+            var usuarioActual = Guid.NewGuid();
+            var result = await _service.UpdateAsync(id, dto, usuarioActual);
             if (result == null) return BadRequest("Este cronograma ya fue pagado y no puede ser editado.");
             return Ok(new { message = "Cronograma actualizado correctamente", cronograma = result });
         }
@@ -60,7 +63,8 @@ namespace UCP_HUANCAYO.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Desactivar(Guid id)
         {
-            var success = await _service.DesactivarAsync(id);
+            var usuarioActual = Guid.NewGuid();
+            var success = await _service.DesactivarAsync(id, usuarioActual);
             if (!success) return NotFound();
 
             return Ok(new { message = "Cronograma desactivado correctamente." });

@@ -39,6 +39,7 @@ namespace UCP_HUANCAYO.Services
                     Correo = u.Correo,
                     Telefono = u.Telefono,
                     Clave = u.Clave != null ? Encoding.UTF8.GetString(u.Clave) : null,
+                    Rol = u.Rol
                 })
                 .ToListAsync();
         }
@@ -61,6 +62,7 @@ namespace UCP_HUANCAYO.Services
                     Correo = u.Correo,
                     Telefono = u.Telefono,
                     Clave = u.Clave != null ? Encoding.UTF8.GetString(u.Clave) : null,
+                    Rol = u.Rol
                 })
                 .FirstOrDefaultAsync();
         }
@@ -78,6 +80,7 @@ namespace UCP_HUANCAYO.Services
                 Correo = dto.Correo,
                 Telefono = dto.Telefono,
                 Clave = string.IsNullOrWhiteSpace(dto.Clave) ? null : Encoding.UTF8.GetBytes(dto.Clave),
+                Rol = dto.Rol,
                 Activo = true,
                 IdResponsable = dto.IdResponsable
             };
@@ -86,12 +89,13 @@ namespace UCP_HUANCAYO.Services
             await _context.SaveChangesAsync();
 
             var context = _httpContextAccessor.HttpContext!;
+            var detalle = AuditoriaDetalleHelper.GenerarDetalle(usuario, "Usuario creado");
 
             await _auditoriaHelper.RegistrarDesdeContextoAsync(
                 tabla: "usuario",
                 idRegistro: usuario.IdUsuario,
                 accion: "INSERT",
-                detalle: $"Usuario creado: Alias={usuario.Alias}, DocTipo={usuario.DocIdentTipo}, DocNro={usuario.DocIdentNro}, Nombres={usuario.Nombres}, Correo={usuario.Correo}, Telefono={usuario.Telefono}",
+                detalle: detalle,
                 idUsuario: usuarioActual,
                 context: context
             );
@@ -105,7 +109,8 @@ namespace UCP_HUANCAYO.Services
                 Nombres = usuario.Nombres,
                 Correo = usuario.Correo,
                 Telefono = usuario.Telefono,
-                Clave = usuario.Clave != null ? Encoding.UTF8.GetString(usuario.Clave) : null
+                Clave = usuario.Clave != null ? Encoding.UTF8.GetString(usuario.Clave) : null,
+                Rol = usuario.Rol
             };
         }
 
@@ -114,43 +119,40 @@ namespace UCP_HUANCAYO.Services
             var usuario = await _context.Usuarios.FindAsync(id);
             if (usuario == null) return null;
 
-            var cambios = new List<string>();
+            var usuarioAntes = new Usuario
+            {
+                IdUsuario = usuario.IdUsuario,
+                IdDominio = usuario.IdDominio,
+                Alias = usuario.Alias,
+                DocIdentTipo = usuario.DocIdentTipo,
+                DocIdentNro = usuario.DocIdentNro,
+                Nombres = usuario.Nombres,
+                Correo = usuario.Correo,
+                Telefono = usuario.Telefono,
+                Clave = usuario.Clave,
+                Rol = usuario.Rol,
+                Activo = usuario.Activo,
+                IdResponsable = usuario.IdResponsable
+            };
 
-            if (dto.Alias != null)
-            {
-                cambios.Add($"Alias: {usuario.Alias} → {dto.Alias}");
-                usuario.Alias = dto.Alias;
-            }
-            if (dto.Nombres != null)
-            {
-                cambios.Add($"Nombres: {usuario.Nombres} → {dto.Nombres}");
-                usuario.Nombres = dto.Nombres;
-            }
-            if (dto.Correo != null)
-            {
-                cambios.Add($"Correo: {usuario.Correo} → {dto.Correo}");
-                usuario.Correo = dto.Correo;
-            }
-            if (dto.Telefono != null)
-            {
-                cambios.Add($"Telefono: {usuario.Telefono} → {dto.Telefono}");
-                usuario.Telefono = dto.Telefono;
-            }
-            if (dto.Clave != null)
-            {
-                cambios.Add("Clave: actualizada");
-                usuario.Clave = Encoding.UTF8.GetBytes(dto.Clave);
-            }
+            if (dto.Alias != null) usuario.Alias = dto.Alias;
+            if (dto.Nombres != null) usuario.Nombres = dto.Nombres;
+            if (dto.Correo != null) usuario.Correo = dto.Correo;
+            if (dto.Telefono != null) usuario.Telefono = dto.Telefono;
+            if (dto.Clave != null) usuario.Clave = Encoding.UTF8.GetBytes(dto.Clave);
+            if (dto.Rol != null) usuario.Rol = dto.Rol;
+
 
             await _context.SaveChangesAsync();
 
             var context = _httpContextAccessor.HttpContext!;
+            var detalle = AuditoriaDetalleHelper.GenerarCambios(usuarioAntes, usuario, "Usuario actualizado parcialmente");
 
             await _auditoriaHelper.RegistrarDesdeContextoAsync(
                 tabla: "usuario",
                 idRegistro: usuario.IdUsuario,
                 accion: "PATCH",
-                detalle: string.Join(", ", cambios),
+                detalle: detalle,
                 idUsuario: usuarioActual,
                 context: context
             );
@@ -164,7 +166,8 @@ namespace UCP_HUANCAYO.Services
                 Nombres = usuario.Nombres,
                 Correo = usuario.Correo,
                 Telefono = usuario.Telefono,
-                Clave = usuario.Clave != null ? Encoding.UTF8.GetString(usuario.Clave) : null
+                Clave = usuario.Clave != null ? Encoding.UTF8.GetString(usuario.Clave) : null,
+                Rol = usuario.Rol
             };
         }
 
@@ -173,6 +176,22 @@ namespace UCP_HUANCAYO.Services
             var usuario = await _context.Usuarios.FindAsync(id);
             if(usuario == null) return null;
 
+            var usuarioAntes = new Usuario
+            {
+                IdUsuario = usuario.IdUsuario,
+                IdDominio = usuario.IdDominio,
+                Alias = usuario.Alias,
+                DocIdentTipo = usuario.DocIdentTipo,
+                DocIdentNro = usuario.DocIdentNro,
+                Nombres = usuario.Nombres,
+                Correo = usuario.Correo,
+                Telefono = usuario.Telefono,
+                Clave = usuario.Clave,
+                Rol = usuario.Rol,
+                Activo = usuario.Activo,
+                IdResponsable = usuario.IdResponsable
+            };
+
             usuario.Alias = dto.Alias;
             usuario.DocIdentTipo = dto.DocIdentTipo;
             usuario.DocIdentNro = dto.DocIdentNro;
@@ -180,16 +199,18 @@ namespace UCP_HUANCAYO.Services
             usuario.Correo = dto.Correo;
             usuario.Telefono = dto.Telefono;
             usuario.Clave = string.IsNullOrWhiteSpace(dto.Clave) ? null : Encoding.UTF8.GetBytes(dto.Clave);
+            usuario.Rol = dto.Rol;
 
             await _context.SaveChangesAsync();
 
             var context = _httpContextAccessor.HttpContext!;
+            var detalle = AuditoriaDetalleHelper.GenerarCambios(usuarioAntes, usuario, "Usuario actualizado");
 
             await _auditoriaHelper.RegistrarDesdeContextoAsync(
                 tabla: "usuario",
                 idRegistro: usuario.IdUsuario,
                 accion: "UPDATE",
-                detalle: $"Usuario actualizado: Alias={usuario.Alias}, DocTipo={usuario.DocIdentTipo}, DocNro={usuario.DocIdentNro}, Nombres={usuario.Nombres}, Correo={usuario.Correo}, Telefono={usuario.Telefono}",
+                detalle: detalle,
                 idUsuario: usuarioActual,
                 context: context
             );
@@ -203,7 +224,8 @@ namespace UCP_HUANCAYO.Services
                 Nombres = usuario.Nombres,
                 Correo = usuario.Correo,
                 Telefono = usuario.Telefono,
-                Clave = usuario.Clave != null ? Encoding.UTF8.GetString(usuario.Clave) : null
+                Clave = usuario.Clave != null ? Encoding.UTF8.GetString(usuario.Clave) : null,
+                Rol = usuario.Rol
             };
         }
 

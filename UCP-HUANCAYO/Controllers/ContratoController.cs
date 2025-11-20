@@ -33,7 +33,8 @@ namespace UCP_HUANCAYO.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(ContratoCreateDto dto)
         {
-            var result = await _service.CreateAsync(dto);
+            var usuarioActual = Guid.NewGuid();
+            var result = await _service.CreateAsync(dto, usuarioActual);
             if (result == null)
                 return BadRequest("El predio no existe o es un auditorio. Usa Alquiler en su lugar.");
 
@@ -43,7 +44,8 @@ namespace UCP_HUANCAYO.Controllers
         [HttpPatch("{id}")]
         public async Task<IActionResult> Patch(Guid id, ContratoPatchDto dto)
         {
-            var result = await _service.PatchAsync(id, dto);
+            var usuarioActual = Guid.NewGuid();
+            var result = await _service.PatchAsync(id, dto, usuarioActual);
             if (result == null)
                 return BadRequest("Este contrato ya fue pagado completamente y no puede ser editado.");
 
@@ -53,7 +55,8 @@ namespace UCP_HUANCAYO.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, ContratoUpdateDto dto)
         {
-            var result = await _service.UpdateAsync(id, dto);
+            var usuarioActual = Guid.NewGuid();
+            var result = await _service.UpdateAsync(id, dto, usuarioActual);
             if (result == null)
                 return BadRequest("Este contrato ya fue pagado completamente y no puede ser editado.");
 
@@ -63,7 +66,8 @@ namespace UCP_HUANCAYO.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Desactivar(Guid id)
         {
-            var success = await _service.DesactivarAsync(id);
+            var usuarioActual = Guid.NewGuid();
+            var success = await _service.DesactivarAsync(id, usuarioActual);
             if (!success) return NotFound();
 
             return Ok(new { message = "Contrato y cronogramas desactivados correctamente." });

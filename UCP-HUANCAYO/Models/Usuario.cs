@@ -35,6 +35,9 @@ namespace UCP_HUANCAYO.Models
         [Column("clave")]
         public byte[]? Clave { get; set; }
 
+        [Column("rol")]
+        public string? Rol { get; set; }
+
         [Column("activo")]
         public bool Activo { get; set; }
 
