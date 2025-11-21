@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using UCP_HUANCAYO.Dtos.Auditoria;
 using UCP_HUANCAYO.Services;
 
@@ -15,6 +16,7 @@ namespace UCP_HUANCAYO.Controllers
             _service = service;
         }
 
+        [Authorize(Policy = "SuperAdministradores")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<AuditoriaViewDto>>> GetAll()
         {
@@ -22,6 +24,7 @@ namespace UCP_HUANCAYO.Controllers
             return Ok(result);
         }
 
+        [Authorize(Policy = "SuperAdministradores")]
         [HttpGet("{id}")]
         public async Task<ActionResult<AuditoriaViewDto>> GetById(Guid id)
         {
@@ -30,6 +33,7 @@ namespace UCP_HUANCAYO.Controllers
             return Ok(result);
         }
 
+        [Authorize(Policy = "SuperAdministradores")]
         [HttpPost]
         public async Task<ActionResult> Create(AuditoriaCreateDto dto)
         {

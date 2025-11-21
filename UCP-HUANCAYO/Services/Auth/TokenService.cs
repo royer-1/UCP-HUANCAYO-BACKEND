@@ -3,15 +3,36 @@ using UCP_HUANCAYO.Data;
 using UCP_HUANCAYO.Dtos.Token;
 using UCP_HUANCAYO.Models;
 
-namespace UCP_HUANCAYO.Services
+namespace UCP_HUANCAYO.Services.Auth
 {
     public class TokenService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IHttpContextAccessor _http;
 
-        public TokenService(ApplicationDbContext context)
+        public TokenService(ApplicationDbContext context, IHttpContextAccessor http)
         {
             _context = context;
+            _http = http;
+        }
+
+        // (cuando el usuario hace login)
+        public async Task<Token> RegistrarEmisionAsync(Guid idUsuario, DateTime expiracion)
+        {
+            var ip = _http.HttpContext?.Connection.RemoteIpAddress?.ToString();
+
+            var registro = new Token
+            {
+                IdToken = Guid.NewGuid(),
+                IdUsuario = idUsuario,
+                Expiracion = expiracion,
+                Ip = ip,
+                Revocado = false
+            };
+
+            _context.Tokens.Add(registro);
+            await _context.SaveChangesAsync();
+            return registro;
         }
 
         public async Task<IEnumerable<TokenViewDto>> GetAllAsync()

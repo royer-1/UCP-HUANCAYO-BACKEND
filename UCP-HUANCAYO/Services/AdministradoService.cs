@@ -11,13 +11,29 @@
         {
             private readonly ApplicationDbContext _context;
             private readonly AuditoriaHelper _auditoriaHelper;
-            private readonly IHttpContextAccessor _httpContextAccessor;
+            private readonly UsuarioContextHelper _usuarioContextHelper;
 
-            public AdministradoService(ApplicationDbContext context, AuditoriaHelper auditoriaHelper, IHttpContextAccessor httpContextAccessor)
+            public AdministradoService(ApplicationDbContext context, AuditoriaHelper auditoriaHelper, UsuarioContextHelper usuarioContextHelper)
             {
                 _context = context;
                 _auditoriaHelper = auditoriaHelper;
-                _httpContextAccessor = httpContextAccessor;
+                _usuarioContextHelper = usuarioContextHelper;
+            }
+
+            private AdministradoViewDto MapToViewDto(Administrado a)
+            {
+                return new AdministradoViewDto
+                {
+                    IdAdministrado = a.IdAdministrado,
+                    DocIdentTipo = a.DocIdentTipo,
+                    DocIdentNro = a.DocIdentNro,
+                    RazonSocial = a.RazonSocial,
+                    Telefono = a.Telefono,
+                    Correo = a.Correo != null ? Encoding.UTF8.GetString(a.Correo) : null,
+                    Direccion = a.Direccion,
+                    Referencia = a.Referencia,
+                    Ubigeo = a.Ubigeo
+                };
             }
 
             public async Task<IEnumerable<AdministradoViewDto>> GetAllAsync()
@@ -25,18 +41,7 @@
                 return await _context.Administrados
                     .Where(a => a.Activo)
                     .AsNoTracking()
-                    .Select(a => new AdministradoViewDto
-                    {
-                        IdAdministrado = a.IdAdministrado,
-                        DocIdentTipo = a.DocIdentTipo,
-                        DocIdentNro = a.DocIdentNro,
-                        RazonSocial = a.RazonSocial,
-                        Telefono = a.Telefono,
-                        Correo = a.Correo != null ? Encoding.UTF8.GetString(a.Correo) : null,
-                        Direccion = a.Direccion,
-                        Referencia = a.Referencia,
-                        Ubigeo = a.Ubigeo
-                    })
+                    .Select(a => MapToViewDto(a))
                     .ToListAsync();
             }
 
@@ -45,23 +50,14 @@
                 return await _context.Administrados
                     .Where(a => a.IdAdministrado == id)
                     .AsNoTracking()
-                    .Select(a => new AdministradoViewDto
-                    {
-                        IdAdministrado = a.IdAdministrado,
-                        DocIdentTipo = a.DocIdentTipo,
-                        DocIdentNro = a.DocIdentNro,
-                        RazonSocial = a.RazonSocial,
-                        Telefono = a.Telefono,
-                        Correo = a.Correo != null ? Encoding.UTF8.GetString(a.Correo) : null,
-                        Direccion = a.Direccion,
-                        Referencia = a.Referencia,
-                        Ubigeo = a.Ubigeo
-                    })
+                    .Select(a => MapToViewDto(a))
                     .FirstOrDefaultAsync();
             }
 
-            public async Task<AdministradoViewDto> CreateAsync(AdministradoCreateDto dto, Guid usuarioActual)
+            public async Task<AdministradoViewDto> CreateAsync(AdministradoCreateDto dto)
             {
+                var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
                 var administrado = new Administrado
                 {
                     IdAdministrado = Guid.NewGuid(),
@@ -74,40 +70,22 @@
                     Referencia = string.IsNullOrWhiteSpace(dto.Referencia) ? null : dto.Referencia,
                     Ubigeo = dto.Ubigeo,
                     Activo = true,
-                    IdResponsable = dto.IdResponsable
+                    IdResponsable = usuarioActual
                 };
 
                 _context.Administrados.Add(administrado);
                 await _context.SaveChangesAsync();
 
-                var context = _httpContextAccessor.HttpContext!;
                 var detalle = AuditoriaDetalleHelper.GenerarDetalle(administrado, "Administrado creado");
+                await _auditoriaHelper.RegistrarAsync("administrado", administrado.IdAdministrado, "INSERT", detalle);
 
-                await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                    tabla: "administrado",
-                    idRegistro: administrado.IdAdministrado,
-                    accion: "INSERT",
-                    detalle: detalle,
-                    idUsuario: usuarioActual,
-                    context: context
-                );
-
-                return new AdministradoViewDto
-                {
-                    IdAdministrado = administrado.IdAdministrado,
-                    DocIdentTipo = administrado.DocIdentTipo,
-                    DocIdentNro = administrado.DocIdentNro,
-                    RazonSocial = administrado.RazonSocial,
-                    Telefono = administrado.Telefono,
-                    Correo = administrado.Correo != null ? Encoding.UTF8.GetString(administrado.Correo) : null,
-                    Direccion = administrado.Direccion,
-                    Referencia = administrado.Referencia,
-                    Ubigeo = administrado.Ubigeo
-                };
+                return MapToViewDto(administrado);
             }
 
-            public async Task<AdministradoViewDto?> PatchAsync(Guid id, AdministradoPatchDto dto, Guid usuarioActual)
+            public async Task<AdministradoViewDto?> PatchAsync(Guid id, AdministradoPatchDto dto)
             {
+                var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
                 var administrado = await _context.Administrados.FindAsync(id);
                 if (administrado == null) return null;
 
@@ -133,36 +111,19 @@
                 if (dto.Referencia != null) administrado.Referencia = dto.Referencia;
                 if (dto.Ubigeo != null) administrado.Ubigeo = dto.Ubigeo;
 
+                administrado.IdResponsable = usuarioActual;
                 await _context.SaveChangesAsync();
 
-                var context = _httpContextAccessor.HttpContext!;
-                var detalle = AuditoriaDetalleHelper.GenerarCambios(administradoAntes, administrado, "Administrado actualizado parcialmente");
+                var detalle = AuditoriaDetalleHelper.GenerarCambios(administradoAntes!, administrado, "Administrado actualizado parcialmente");
+                await _auditoriaHelper.RegistrarAsync("administrado", administrado.IdAdministrado, "PATCH", detalle);
 
-                await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                    tabla: "administrado",
-                    idRegistro: administrado.IdAdministrado,
-                    accion: "PATCH",
-                    detalle: detalle,
-                    idUsuario: usuarioActual,
-                    context: context
-                );
-
-                return new AdministradoViewDto
-                {
-                    IdAdministrado = administrado.IdAdministrado,
-                    DocIdentTipo = administrado.DocIdentTipo,
-                    DocIdentNro = administrado.DocIdentNro,
-                    RazonSocial = administrado.RazonSocial,
-                    Telefono = administrado.Telefono,
-                    Correo = administrado.Correo != null ? Encoding.UTF8.GetString(administrado.Correo) : null,
-                    Direccion = administrado.Direccion,
-                    Referencia = administrado.Referencia,
-                    Ubigeo = administrado.Ubigeo
-                };
+                return MapToViewDto(administrado);
             }
 
-            public async Task<AdministradoViewDto?> UpdateAsync(Guid id, AdministradoUpdateDto dto, Guid usuarioActual)
+            public async Task<AdministradoViewDto?> UpdateAsync(Guid id, AdministradoUpdateDto dto)
             {
+                var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
                 var administrado = await _context.Administrados.FindAsync(id);
                 if (administrado == null) return null;
 
@@ -189,53 +150,29 @@
                 administrado.Direccion = dto.Direccion;
                 administrado.Referencia = string.IsNullOrWhiteSpace(dto.Referencia) ? null : dto.Referencia;
                 administrado.Ubigeo = dto.Ubigeo;
+                administrado.IdResponsable = usuarioActual;
 
                 await _context.SaveChangesAsync();
 
-                var context = _httpContextAccessor.HttpContext!;
                 var detalle = AuditoriaDetalleHelper.GenerarCambios(administradoAntes, administrado, "Administrado actualizado");
+                await _auditoriaHelper.RegistrarAsync("administrado", administrado.IdAdministrado, "UPDATE", detalle);
 
-                await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                    tabla: "administrado",
-                    idRegistro: administrado.IdAdministrado,
-                    accion: "UPDATE",
-                    detalle: detalle,
-                    idUsuario: usuarioActual,
-                    context: context
-                );
+                return MapToViewDto(administrado);
+        }
 
-                return new AdministradoViewDto
-                {
-                    IdAdministrado = administrado.IdAdministrado,
-                    DocIdentTipo = administrado.DocIdentTipo,
-                    DocIdentNro = administrado.DocIdentNro,
-                    RazonSocial = administrado.RazonSocial,
-                    Telefono = administrado.Telefono,
-                    Correo = administrado.Correo != null ? Encoding.UTF8.GetString(administrado.Correo) : null,
-                    Direccion = administrado.Direccion,
-                    Referencia = administrado.Referencia,
-                    Ubigeo = administrado.Ubigeo
-                };
-            }
-
-            public async Task<bool> DesactivarAsync(Guid id, Guid usuarioActual)
+            public async Task<bool> DesactivarAsync(Guid id)
             {
+                var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
                 var administrado = await _context.Administrados.FindAsync(id);
                 if (administrado == null) return false;
 
                 administrado.Activo = false;
+                administrado.IdResponsable = usuarioActual;
                 await _context.SaveChangesAsync();
 
-                var context = _httpContextAccessor.HttpContext!;
-                await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                    tabla: "administrado",
-                    idRegistro: administrado.IdAdministrado,
-                    accion: "DELETE",
-                    detalle: "Administrado desactivado (Activo=false)",
-                    idUsuario: usuarioActual,
-                    context: context
-                );
-
+                await _auditoriaHelper.RegistrarAsync("administrado", administrado.IdAdministrado, "DELETE", "Administrado desactivado (Activo=false)");
+                
                 return true;
             }
 

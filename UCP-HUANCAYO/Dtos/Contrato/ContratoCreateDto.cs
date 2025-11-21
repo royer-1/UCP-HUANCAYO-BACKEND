@@ -23,8 +23,5 @@ namespace UCP_HUANCAYO.Dtos.Contrato
         public decimal? Agua { get; set; }
 
         public decimal? Electricidad { get; set; }
-
-        [Required]
-        public Guid IdResponsable { get; set; }
     }
 }

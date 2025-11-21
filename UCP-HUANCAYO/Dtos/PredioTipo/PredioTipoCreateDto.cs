@@ -11,7 +11,5 @@ namespace UCP_HUANCAYO.Dtos.PredioTipo
         //[Required]
         public bool Contrato { get; set; }
 
-        [Required]
-        public Guid IdResponsable { get; set; }
     }
 }

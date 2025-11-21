@@ -32,9 +32,6 @@ namespace UCP_HUANCAYO.Dtos.Administrado
         [Required]
         [StringLength(6)]
         public string Ubigeo { get; set; } = string.Empty;
-
-        [Required]
-        public Guid IdResponsable { get; set; }
     }
 }
 

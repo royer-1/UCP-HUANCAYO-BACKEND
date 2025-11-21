@@ -38,9 +38,6 @@ namespace UCP_HUANCAYO.Dtos.Predio
         [StringLength(20)]
         public string? Longitud { get; set; }
 
-        [Required]
-        public Guid IdResponsable { get; set; }
-
         public List<string>? ImagenesPredio { get; set; }
 
     }

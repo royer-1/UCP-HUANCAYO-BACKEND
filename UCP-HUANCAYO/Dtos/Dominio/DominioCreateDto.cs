@@ -19,8 +19,5 @@ namespace UCP_HUANCAYO.Dtos.Dominio
 
         [Required]
         public bool Default { get; set; }
-
-        [Required]
-        public Guid IdResponsable { get; set; }
     }
 }

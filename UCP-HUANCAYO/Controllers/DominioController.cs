@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using UCP_HUANCAYO.Dtos.Dominio;
 using UCP_HUANCAYO.Dtos.Usuario;
 using UCP_HUANCAYO.Services;
@@ -16,6 +17,7 @@ namespace UCP_HUANCAYO.Controllers
             _service = service;
         }
 
+        [Authorize(Policy = "SuperAdministradores")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<DominioViewDto>>> GetAll()
         {
@@ -23,6 +25,7 @@ namespace UCP_HUANCAYO.Controllers
             return Ok(result);
         }
 
+        [Authorize(Policy = "SuperAdministradores")]
         [HttpGet("{id}")]
         public async Task<ActionResult<DominioViewDto>> GetById(Guid id)
         {
@@ -31,6 +34,7 @@ namespace UCP_HUANCAYO.Controllers
             return Ok(result);
         }
 
+        [Authorize(Policy = "SuperAdministradores")]
         [HttpPost]
         public async Task<ActionResult> Create(DominioCreateDto dto)
         {
@@ -38,6 +42,7 @@ namespace UCP_HUANCAYO.Controllers
             return Ok(new { message = "El dominio fue creado correctamente", dominio = result });
         }
 
+        [Authorize(Policy = "SuperAdministradores")]
         [HttpPatch("{id}")]
         public async Task<IActionResult> Patch(Guid id, DominioPatchDto dto)
         {
@@ -46,6 +51,7 @@ namespace UCP_HUANCAYO.Controllers
             return Ok(new { message = "El dominio fue actualizado parcialmente", dominio = result });
         }
 
+        [Authorize(Policy = "SuperAdministradores")]
         [HttpPut("{id}")]
         public async Task<ActionResult> Update(Guid id, DominioUpdateDto dto)
         {
@@ -54,6 +60,7 @@ namespace UCP_HUANCAYO.Controllers
             return Ok(new { message = "El dominio se actualizado correctamente", dominio = result });
         }
 
+        [Authorize(Policy = "SuperAdministradores")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Desactivar(Guid id)
         {

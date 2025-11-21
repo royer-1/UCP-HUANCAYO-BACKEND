@@ -21,8 +21,5 @@ namespace UCP_HUANCAYO.Dtos.CronogramaPago
 
         [StringLength(500)]
         public string? Observacion { get; set; }
-
-        [Required]
-        public Guid IdResponsable { get; set; }
     }
 }

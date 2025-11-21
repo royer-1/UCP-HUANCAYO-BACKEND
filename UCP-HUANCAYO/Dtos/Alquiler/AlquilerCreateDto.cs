@@ -23,8 +23,5 @@ namespace UCP_HUANCAYO.Dtos.Alquiler
 
         [StringLength(500)]
         public string? Observacion { get; set; }
-
-        [Required]
-        public Guid IdResponsable { get; set; }
     }
 }

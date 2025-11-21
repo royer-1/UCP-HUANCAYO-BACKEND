@@ -11,13 +11,29 @@ namespace UCP_HUANCAYO.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly AuditoriaHelper _auditoriaHelper;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly UsuarioContextHelper _usuarioContextHelper;
 
-        public CronogramaPagoService(ApplicationDbContext context, AuditoriaHelper auditoriaHelper, IHttpContextAccessor httpContextAccessor)
+        public CronogramaPagoService(ApplicationDbContext context, AuditoriaHelper auditoriaHelper, UsuarioContextHelper usuarioContextHelper)
         {
             _context = context;
             _auditoriaHelper = auditoriaHelper;
-            _httpContextAccessor = httpContextAccessor;
+            _usuarioContextHelper = usuarioContextHelper;
+        }
+
+        private CronogramaPagoViewDto MapToViewDto(CronogramaPago c)
+        {
+            return new CronogramaPagoViewDto
+            {
+                IdCronograma = c.IdCronograma,
+                IdContrato = c.IdContrato,
+                PeriodoDesde = c.PeriodoDesde,
+                PeriodoHasta = c.PeriodoHasta,
+                OrdenPago = c.OrdenPago,
+                FechaOrden = c.FechaOrden,
+                Ci = c.Ci,
+                FechaCi = c.FechaCi,
+                Observacion = c.Observacion
+            };
         }
 
         public async Task<IEnumerable<CronogramaPagoViewDto>> GetAllAsync()
@@ -25,18 +41,7 @@ namespace UCP_HUANCAYO.Services
             return await _context.CronogramaPagos
                 .Where(c => c.Activo)
                 .AsNoTracking()
-                .Select(c => new CronogramaPagoViewDto
-                {
-                    IdCronograma = c.IdCronograma,
-                    IdContrato = c.IdContrato,
-                    PeriodoDesde = c.PeriodoDesde,
-                    PeriodoHasta = c.PeriodoHasta,
-                    OrdenPago = c.OrdenPago,
-                    FechaOrden = c.FechaOrden,
-                    Ci = c.Ci,
-                    FechaCi = c.FechaCi,
-                    Observacion = c.Observacion
-                })
+                .Select(c => MapToViewDto(c))
                 .ToListAsync();
         }
 
@@ -48,22 +53,13 @@ namespace UCP_HUANCAYO.Services
 
             if (cronograma == null) return null;
 
-            return new CronogramaPagoViewDto
-            {
-                IdCronograma = cronograma.IdCronograma,
-                IdContrato = cronograma.IdContrato,
-                PeriodoDesde = cronograma.PeriodoDesde,
-                PeriodoHasta = cronograma.PeriodoHasta,
-                OrdenPago = cronograma.OrdenPago,
-                FechaOrden = cronograma.FechaOrden,
-                Ci = cronograma.Ci,
-                FechaCi = cronograma.FechaCi,
-                Observacion = cronograma.Observacion
-            };
+            return MapToViewDto(cronograma);
         }
 
-        public async Task<CronogramaPagoViewDto?> CreateAsync(CronogramaPagoCreateDto dto, Guid usuarioActual)
+        public async Task<CronogramaPagoViewDto?> CreateAsync(CronogramaPagoCreateDto dto)
         {
+            var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
             var contrato = await _context.Contratos
                 .Include(c => c.CronogramasPago)
                 .FirstOrDefaultAsync(c => c.IdContrato == dto.IdContrato);
@@ -84,7 +80,7 @@ namespace UCP_HUANCAYO.Services
                 FechaCi = dto.FechaCi,
                 Observacion = dto.Observacion,
                 Activo = true,
-                IdResponsable = dto.IdResponsable
+                IdResponsable = usuarioActual
             };
 
             _context.CronogramaPagos.Add(nuevoCronograma);
@@ -92,34 +88,16 @@ namespace UCP_HUANCAYO.Services
 
             await _context.SaveChangesAsync();
 
-            var context = _httpContextAccessor.HttpContext!;
             var detalle = AuditoriaDetalleHelper.GenerarDetalle(nuevoCronograma, "CronogramaPago creado");
+            await _auditoriaHelper.RegistrarAsync("cronograma_pago", nuevoCronograma.IdCronograma, "INSERT", detalle);
 
-            await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                tabla: "cronograma_pago",
-                idRegistro: nuevoCronograma.IdCronograma,
-                accion: "INSERT",
-                detalle: detalle,
-                idUsuario: usuarioActual,
-                context: context
-            );
-
-            return new CronogramaPagoViewDto
-            {
-                IdCronograma = nuevoCronograma.IdCronograma,
-                IdContrato = nuevoCronograma.IdContrato,
-                PeriodoDesde = nuevoCronograma.PeriodoDesde,
-                PeriodoHasta = nuevoCronograma.PeriodoHasta,
-                OrdenPago = nuevoCronograma.OrdenPago,
-                FechaOrden = nuevoCronograma.FechaOrden,
-                Ci = nuevoCronograma.Ci,
-                FechaCi = nuevoCronograma.FechaCi,
-                Observacion = nuevoCronograma.Observacion
-            };
+            return MapToViewDto(nuevoCronograma);
         }
 
-        public async Task<CronogramaPagoViewDto?> PatchAsync(Guid id, CronogramaPagoPatchDto dto, Guid usuarioActual)
+        public async Task<CronogramaPagoViewDto?> PatchAsync(Guid id, CronogramaPagoPatchDto dto)
         {
+            var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
             var cronograma = await _context.CronogramaPagos.FindAsync(id);
             if (cronograma == null || !cronograma.Activo) return null;
 
@@ -145,36 +123,19 @@ namespace UCP_HUANCAYO.Services
             if (dto.FechaCi.HasValue) cronograma.FechaCi = dto.FechaCi.Value;
             if (dto.Observacion != null) cronograma.Observacion = dto.Observacion;
 
+            cronograma.IdResponsable = usuarioActual;
             await _context.SaveChangesAsync();
 
-            var context = _httpContextAccessor.HttpContext!;
             var detalle = AuditoriaDetalleHelper.GenerarCambios(cronogramaAntes, cronograma, "CronogramaPago actualizado parcialmente");
+            await _auditoriaHelper.RegistrarAsync("cronograma_pago", cronograma.IdCronograma, "PATCH", detalle);
 
-            await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                tabla: "cronograma_pago",
-                idRegistro: cronograma.IdCronograma,
-                accion: "PATCH",
-                detalle: detalle,
-                idUsuario: usuarioActual,
-                context: context
-            );
-
-            return new CronogramaPagoViewDto
-            {
-                IdCronograma = cronograma.IdCronograma,
-                IdContrato = cronograma.IdContrato,
-                PeriodoDesde = cronograma.PeriodoDesde,
-                PeriodoHasta = cronograma.PeriodoHasta,
-                OrdenPago = cronograma.OrdenPago,
-                FechaOrden = cronograma.FechaOrden,
-                Ci = cronograma.Ci,
-                FechaCi = cronograma.FechaCi,
-                Observacion = cronograma.Observacion
-            };
+            return MapToViewDto(cronograma);
         }
 
-        public async Task<CronogramaPagoViewDto?> UpdateAsync(Guid id, CronogramaPagoUpdateDto dto, Guid usuarioActual)
+        public async Task<CronogramaPagoViewDto?> UpdateAsync(Guid id, CronogramaPagoUpdateDto dto)
         {
+            var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
             var cronograma = await _context.CronogramaPagos.FindAsync(id);
             if (cronograma == null || !cronograma.Activo) return null;
 
@@ -199,52 +160,30 @@ namespace UCP_HUANCAYO.Services
             cronograma.Ci = string.IsNullOrWhiteSpace(dto.Ci) ? "" : dto.Ci;
             cronograma.FechaCi = dto.FechaCi;
             cronograma.Observacion = dto.Observacion;
+            cronograma.IdResponsable = usuarioActual;
 
             await _context.SaveChangesAsync();
 
-            var context = _httpContextAccessor.HttpContext!;
             var detalle = AuditoriaDetalleHelper.GenerarCambios(cronogramaAntes, cronograma, "CronogramaPago actualizado");
+            await _auditoriaHelper.RegistrarAsync("cronograma_pago", cronograma.IdCronograma, "UPDATE", detalle);
 
-            await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                tabla: "cronograma_pago",
-                idRegistro: cronograma.IdCronograma,
-                accion: "UPDATE",
-                detalle: detalle,
-                idUsuario: usuarioActual,
-                context: context
-            );
-
-            return new CronogramaPagoViewDto
-            {
-                IdCronograma = cronograma.IdCronograma,
-                IdContrato = cronograma.IdContrato,
-                PeriodoDesde = cronograma.PeriodoDesde,
-                PeriodoHasta = cronograma.PeriodoHasta,
-                OrdenPago = cronograma.OrdenPago,
-                FechaOrden = cronograma.FechaOrden,
-                Ci = cronograma.Ci,
-                FechaCi = cronograma.FechaCi,
-                Observacion = cronograma.Observacion
-            };
+            return MapToViewDto(cronograma);
         }
 
-        public async Task<bool> DesactivarAsync(Guid id, Guid usuarioActual)
+        public async Task<bool> DesactivarAsync(Guid id)
         {
+            var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
             var cronograma = await _context.CronogramaPagos.FindAsync(id);
             if (cronograma == null || !cronograma.Activo) return false;
 
             cronograma.Activo = false;
+            cronograma.IdResponsable = usuarioActual;
+
             await _context.SaveChangesAsync();
 
-            var context = _httpContextAccessor.HttpContext!;
-            await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                tabla: "cronograma_pago",
-                idRegistro: cronograma.IdCronograma,
-                accion: "DELETE",
-                detalle: "Cronograma desactivado (Activo=false)",
-                idUsuario: usuarioActual,
-                context: context
-            );
+            await _auditoriaHelper.RegistrarAsync("cronograma_pago", cronograma.IdCronograma, "DELETE", "Cronograma desactivado (Activo=false)");
+            
             return true;
         }
     }

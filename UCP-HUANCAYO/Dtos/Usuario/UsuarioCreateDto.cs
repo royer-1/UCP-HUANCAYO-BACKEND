@@ -35,8 +35,5 @@ namespace UCP_HUANCAYO.Dtos.Usuario
         [Required]
         [StringLength(50)]
         public string Rol { get; set; } = string.Empty;
-
-        [Required]
-        public Guid IdResponsable { get; set; }
     }
 }

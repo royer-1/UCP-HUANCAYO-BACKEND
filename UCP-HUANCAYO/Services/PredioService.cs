@@ -11,13 +11,37 @@ namespace UCP_HUANCAYO.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly AuditoriaHelper _auditoriaHelper;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly UsuarioContextHelper _usuarioContextHelper;
 
-        public PredioService(ApplicationDbContext context, AuditoriaHelper auditoriaHelper, IHttpContextAccessor httpContextAccessor)
+        public PredioService(ApplicationDbContext context, AuditoriaHelper auditoriaHelper, UsuarioContextHelper usuarioContextHelper)
         {
             _context = context;
             _auditoriaHelper = auditoriaHelper;
-            _httpContextAccessor = httpContextAccessor;
+            _usuarioContextHelper = usuarioContextHelper;
+        }
+
+        private PredioViewDto MapToViewDto(Predio p)
+        {
+            return new PredioViewDto
+            {
+                IdPredio = p.IdPredio,
+                IdPredioTipo = p.IdPredioTipo,
+                NombrePredio = p.NombrePredio,
+                NombreTipo = p.PredioTipo?.NombreTipo,
+                Descripcion = p.Descripcion,
+                AreaPredio = p.AreaPredio,
+                Capacidad = p.Capacidad,
+                RegistroAgua = p.RegistroAgua,
+                RegistroLuz = p.RegistroLuz,
+                Direccion = p.Direccion,
+                Ubigeo = p.Ubigeo,
+                Latitud = p.Latitud,
+                Longitud = p.Longitud,
+                Imagenes = _context.PredioImagenes
+                    .Where(i => i.IdPredio == p.IdPredio && i.Activo)
+                    .Select(i => i.Imagen!)
+                    .ToList()
+            };
         }
 
         public async Task<IEnumerable<PredioViewDto>> GetAllAsync()
@@ -26,27 +50,7 @@ namespace UCP_HUANCAYO.Services
                 .Include(p => p.PredioTipo)
                 .Where(p => p.Activo)
                 .AsNoTracking()
-                .Select(p => new PredioViewDto
-                {
-                    IdPredio = p.IdPredio,
-                    IdPredioTipo = p.IdPredioTipo,
-                    NombrePredio = p.NombrePredio,
-                    NombreTipo = p.PredioTipo.NombreTipo,
-                    Descripcion = p.Descripcion,
-                    AreaPredio = p.AreaPredio,
-                    Capacidad = p.Capacidad,
-                    RegistroAgua = p.RegistroAgua,
-                    RegistroLuz = p.RegistroLuz,
-                    Direccion = p.Direccion,
-                    Ubigeo = p.Ubigeo,
-                    Latitud = p.Latitud,
-                    Longitud = p.Longitud,
-
-                    Imagenes = _context.PredioImagenes
-                        .Where(i => i.IdPredio == p.IdPredio)
-                        .Select(i => i.Imagen!)
-                        .ToList()
-                })
+                .Select(p => MapToViewDto(p))
                 .ToListAsync();
         }
 
@@ -56,32 +60,14 @@ namespace UCP_HUANCAYO.Services
                 .Include(p => p.PredioTipo)
                 .Where(p => p.IdPredio == id)
                 .AsNoTracking()
-                .Select(p => new PredioViewDto
-                {
-                    IdPredio = p.IdPredio,
-                    IdPredioTipo = p.IdPredioTipo,
-                    NombrePredio = p.NombrePredio,
-                    NombreTipo = p.PredioTipo.NombreTipo,
-                    Descripcion = p.Descripcion,
-                    AreaPredio = p.AreaPredio,
-                    Capacidad = p.Capacidad,
-                    RegistroAgua = p.RegistroAgua,
-                    RegistroLuz = p.RegistroLuz,
-                    Direccion = p.Direccion,
-                    Ubigeo = p.Ubigeo,
-                    Latitud = p.Latitud,
-                    Longitud = p.Longitud,
-
-                    Imagenes = _context.PredioImagenes
-                        .Where(i => i.IdPredio == p.IdPredio)
-                        .Select(i => i.Imagen!)
-                        .ToList()
-                })
+                .Select(p => MapToViewDto(p))
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<PredioViewDto> CreateAsync(PredioCreateDto dto, Guid usuarioActual)
+        public async Task<PredioViewDto> CreateAsync(PredioCreateDto dto)
         {
+            var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
             var predio = new Predio
             {
                 IdPredio = Guid.NewGuid(),
@@ -96,7 +82,7 @@ namespace UCP_HUANCAYO.Services
                 Ubigeo = dto.Ubigeo,
                 Latitud = string.IsNullOrWhiteSpace(dto.Latitud) ? null : dto.Latitud,
                 Longitud = string.IsNullOrWhiteSpace(dto.Longitud) ? null : dto.Longitud,
-                IdResponsable = dto.IdResponsable,
+                IdResponsable = usuarioActual,
                 Activo = true
             };
 
@@ -119,41 +105,16 @@ namespace UCP_HUANCAYO.Services
 
             await _context.SaveChangesAsync();
 
-            var context = _httpContextAccessor.HttpContext!;
             var detalle = AuditoriaDetalleHelper.GenerarDetalle(predio, "Predio creado");
+            await _auditoriaHelper.RegistrarAsync("predio", predio.IdPredio, "INSERT", detalle);
 
-            await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                tabla: "predio",
-                idRegistro: predio.IdPredio,
-                accion: "INSERT",
-                detalle: detalle,
-                idUsuario: usuarioActual,
-                context: context
-            );
-
-            return new PredioViewDto
-            {
-                IdPredio = predio.IdPredio,
-                IdPredioTipo = predio.IdPredioTipo,
-                NombrePredio = predio.NombrePredio,
-                Descripcion = predio.Descripcion,
-                AreaPredio = predio.AreaPredio,
-                Capacidad = predio.Capacidad,
-                RegistroAgua = predio.RegistroAgua,
-                RegistroLuz = predio.RegistroLuz,
-                Direccion = predio.Direccion,
-                Ubigeo = predio.Ubigeo,
-                Latitud = predio.Latitud,
-                Longitud = predio.Longitud,
-                Imagenes = _context.PredioImagenes
-                    .Where(i => i.IdPredio == predio.IdPredio)
-                    .Select(i => i.Imagen!)
-                    .ToList()
-            };
+            return MapToViewDto(predio);
         }
 
-        public async Task<PredioViewDto?> PatchAsync(Guid id, PredioPatchDto dto, Guid usuarioActual)
+        public async Task<PredioViewDto?> PatchAsync(Guid id, PredioPatchDto dto)
         {
+            var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
             var predio = await _context.Predios.FindAsync(id);
             if (predio == null) return null;
 
@@ -207,43 +168,19 @@ namespace UCP_HUANCAYO.Services
                 }
             }
 
+            predio.IdResponsable = usuarioActual;
             await _context.SaveChangesAsync();
 
-            var context = _httpContextAccessor.HttpContext!;
             var detalle = AuditoriaDetalleHelper.GenerarCambios(predioAntes, predio, "Predio actualizado parcialmente");
+            await _auditoriaHelper.RegistrarAsync("predio", predio.IdPredio, "PATCH", detalle);
 
-            await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                tabla: "predio",
-                idRegistro: predio.IdPredio,
-                accion: "PATCH",
-                detalle: detalle,
-                idUsuario: usuarioActual,
-                context: context
-            );
-
-            return new PredioViewDto
-            {
-                IdPredio = predio.IdPredio,
-                IdPredioTipo = predio.IdPredioTipo,
-                NombrePredio = predio.NombrePredio,
-                Descripcion = predio.Descripcion,
-                AreaPredio = predio.AreaPredio,
-                Capacidad = predio.Capacidad,
-                RegistroAgua = predio.RegistroAgua,
-                RegistroLuz = predio.RegistroLuz,
-                Direccion = predio.Direccion,
-                Ubigeo = predio.Ubigeo,
-                Latitud = predio.Latitud,
-                Longitud = predio.Longitud,
-                Imagenes = await _context.PredioImagenes
-                    .Where(i => i.IdPredio == predio.IdPredio && i.Activo)
-                    .Select(i => i.Imagen!)
-                    .ToListAsync()
-            };
+            return MapToViewDto(predio);
         }
 
-        public async Task<PredioViewDto?> UpdateAsync(Guid id, PredioUpdateDto dto, Guid usuarioActual)
+        public async Task<PredioViewDto?> UpdateAsync(Guid id, PredioUpdateDto dto)
         {
+            var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
             var predio = await _context.Predios.FindAsync(id);
             if (predio == null) return null;
 
@@ -297,43 +234,19 @@ namespace UCP_HUANCAYO.Services
                 }
             }
 
+            predio.IdResponsable = usuarioActual;
             await _context.SaveChangesAsync();
 
-            var context = _httpContextAccessor.HttpContext!;
             var detalle = AuditoriaDetalleHelper.GenerarCambios(predioAntes, predio, "Predio actualizado");
+            await _auditoriaHelper.RegistrarAsync("predio", predio.IdPredio, "UPDATE", detalle);
 
-            await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                tabla: "predio",
-                idRegistro: predio.IdPredio,
-                accion: "UPDATE",
-                detalle: detalle,
-                idUsuario: usuarioActual,
-                context: context
-            );
-
-            return new PredioViewDto
-            {
-                IdPredio = predio.IdPredio,
-                IdPredioTipo = predio.IdPredioTipo,
-                NombrePredio = predio.NombrePredio,
-                Descripcion = predio.Descripcion,
-                AreaPredio = predio.AreaPredio,
-                Capacidad = predio.Capacidad,
-                RegistroAgua = predio.RegistroAgua,
-                RegistroLuz = predio.RegistroLuz,
-                Direccion = predio.Direccion,
-                Ubigeo = predio.Ubigeo,
-                Latitud = predio.Latitud,
-                Longitud = predio.Longitud,
-                Imagenes = await _context.PredioImagenes
-                    .Where(i => i.IdPredio == predio.IdPredio)
-                    .Select(i => i.Imagen!)
-                    .ToListAsync()
-            };
+            return MapToViewDto(predio);
         }
 
-        public async Task<bool> DesactivarAsync(Guid id, Guid usuarioActual)
+        public async Task<bool> DesactivarAsync(Guid id)
         {
+            var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
             var predio = await _context.Predios
                 .Include(p => p.Imagenes)
                 .FirstOrDefaultAsync(p => p.IdPredio == id);
@@ -341,6 +254,7 @@ namespace UCP_HUANCAYO.Services
             if (predio == null) return false;
 
             predio.Activo = false;
+            predio.IdResponsable = usuarioActual;
 
             foreach (var imagen in predio.Imagenes)
             {
@@ -349,14 +263,11 @@ namespace UCP_HUANCAYO.Services
 
             await _context.SaveChangesAsync();
 
-            var context = _httpContextAccessor.HttpContext!;
-            await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                tabla: "predio",
-                idRegistro: predio.IdPredio,
-                accion: "DELETE",
-                detalle: "Predio desactivado (Activo=false, imágenes desactivadas)",
-                idUsuario: usuarioActual,
-                context: context
+            await _auditoriaHelper.RegistrarAsync(
+                "predio",
+                predio.IdPredio,
+                "DELETE",
+                "Predio desactivado (Activo=false, imágenes desactivadas)"
             );
 
             return true;

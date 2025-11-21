@@ -21,6 +21,13 @@ namespace UCP_HUANCAYO.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
+        public async Task<Usuario?> ValidarCredencialesAsync(string alias, string clave)
+        {
+            var claveBytes = Encoding.UTF8.GetBytes(clave);
+            return await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.Alias == alias && u.Clave == claveBytes && u.Activo);
+        }
+
         public async Task<IEnumerable<UsuarioViewDto>> GetAllAsync()
         {
             return await _context.Usuarios

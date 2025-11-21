@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using UCP_HUANCAYO.Dtos.Administrado;
 using UCP_HUANCAYO.Services;
 
@@ -15,6 +17,7 @@ namespace UCP_HUANCAYO.Controllers
             _service = service;
         }
 
+        [Authorize(Policy = "PuedeVerAdministrados")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<AdministradoViewDto>>> GetAll()
         {
@@ -22,6 +25,7 @@ namespace UCP_HUANCAYO.Controllers
             return Ok(result);
         }
 
+        [Authorize(Policy = "PuedeVerAdministrados")]
         [HttpGet("{id}")]
         public async Task<ActionResult<AdministradoViewDto>> GetById(Guid id)
         {
@@ -30,41 +34,42 @@ namespace UCP_HUANCAYO.Controllers
             return Ok(result);
         }
 
+        [Authorize(Policy = "SoloGestores")]
         [HttpPost]
         public async Task<ActionResult> Create(AdministradoCreateDto dto)
         {
-            var usuarioActual = Guid.NewGuid();
-            var result = await _service.CreateAsync(dto, usuarioActual);
+            var result = await _service.CreateAsync(dto);
             return Ok(new { message = "El Administrado fue creado correctamente", administrado = result });
         }
 
+        [Authorize(Policy = "SoloGestores")]
         [HttpPatch("{id}")]
         public async Task<IActionResult> Patch(Guid id, AdministradoPatchDto dto)
         {
-            var usuarioActual = Guid.NewGuid();
-            var result = await _service.PatchAsync(id, dto, usuarioActual);
+            var result = await _service.PatchAsync(id, dto);
             if (result == null) return NotFound();
             return Ok(new { message = "El administrado fue actualizado parcialmente", administrado = result });
         }
 
+        [Authorize(Policy = "SoloGestores")]
         [HttpPut("{id}")]
         public async Task<ActionResult> Update(Guid id, AdministradoUpdateDto dto)
         {
-            var usuarioActual = Guid.NewGuid();
-            var result = await _service.UpdateAsync(id, dto, usuarioActual);
+            var result = await _service.UpdateAsync(id, dto);
             if (result == null) return NotFound();  
             return Ok(new { message = "El Administrado se actualizado correctamente", administrado = result });
         }
 
+        [Authorize(Policy = "SoloGestores")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Desactivar(Guid id)
         {
-            var usuarioActual = Guid.NewGuid();
-            var success = await _service.DesactivarAsync(id, usuarioActual);
+            var success = await _service.DesactivarAsync(id);
             if (!success) return NotFound();
             return Ok(new { message = "El administrado fue desactivado correctamente." });
         }
 
+        [Authorize(Policy = "SoloGestores")]
         [HttpPost("paged")]
         public async Task<IActionResult> GetPaged(
             [FromBody] AdministradoFilterDto filters,

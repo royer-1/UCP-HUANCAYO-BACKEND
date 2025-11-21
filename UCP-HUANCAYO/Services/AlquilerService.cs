@@ -11,13 +11,32 @@ namespace UCP_HUANCAYO.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly AuditoriaHelper _auditoriaHelper;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly UsuarioContextHelper _usuarioContextHelper;
 
-        public AlquilerService(ApplicationDbContext context, AuditoriaHelper auditoriaHelper, IHttpContextAccessor httpContextAccessor)
+        public AlquilerService(ApplicationDbContext context, AuditoriaHelper auditoriaHelper, UsuarioContextHelper usuarioContextHelper)
         {
             _context = context;
             _auditoriaHelper = auditoriaHelper;
-            _httpContextAccessor = httpContextAccessor;
+            _usuarioContextHelper = usuarioContextHelper;
+        }
+
+        private AlquilerViewDto MapToViewDto(Alquiler a)
+        {
+            return new AlquilerViewDto
+            {
+                IdAlquiler = a.IdAlquiler,
+                IdPredio = a.IdPredio,
+                IdAdministrado = a.IdAdministrado,
+                NombrePredio = a.Predio?.NombrePredio,
+                PeriodoDesde = a.PeriodoDesde,
+                PeriodoHasta = a.PeriodoHasta,
+                Costo = a.Costo,
+                OrdenPago = a.OrdenPago,
+                FechaOrden = a.FechaOrden,
+                Ci = a.Ci,
+                FechaCi = a.FechaCi,
+                Observacion = a.Observacion
+            };
         }
 
         public async Task<IEnumerable<AlquilerViewDto>> GetAllAsync()
@@ -26,21 +45,7 @@ namespace UCP_HUANCAYO.Services
                 .Include(a => a.Predio)
                 .Where(a => a.Activo)
                 .AsNoTracking()
-                .Select(a => new AlquilerViewDto
-                {
-                    IdAlquiler = a.IdAlquiler,
-                    IdPredio = a.IdPredio,
-                    IdAdministrado = a.IdAdministrado,
-                    NombrePredio = a.Predio.NombrePredio,
-                    PeriodoDesde = a.PeriodoDesde,
-                    PeriodoHasta = a.PeriodoHasta,
-                    Costo = a.Costo,
-                    OrdenPago = a.OrdenPago,
-                    FechaOrden = a.FechaOrden,
-                    Ci = a.Ci,
-                    FechaCi = a.FechaCi,
-                    Observacion = a.Observacion
-                })
+                .Select(a => MapToViewDto(a))
                 .ToListAsync();
         }
 
@@ -50,26 +55,14 @@ namespace UCP_HUANCAYO.Services
                 .Include(a => a.Predio)
                 .Where(a => a.IdAlquiler == id)
                 .AsNoTracking()
-                .Select(a => new AlquilerViewDto
-                {
-                    IdAlquiler = a.IdAlquiler,
-                    IdPredio = a.IdPredio,
-                    IdAdministrado = a.IdAdministrado,
-                    NombrePredio = a.Predio.NombrePredio,
-                    PeriodoDesde = a.PeriodoDesde,
-                    PeriodoHasta = a.PeriodoHasta,
-                    Costo = a.Costo,
-                    OrdenPago = a.OrdenPago,
-                    FechaOrden = a.FechaOrden,
-                    Ci = a.Ci,
-                    FechaCi = a.FechaCi,
-                    Observacion = a.Observacion
-                })
+                .Select(a => MapToViewDto(a))
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<AlquilerViewDto> CreateAsync(AlquilerCreateDto dto, Guid usuarioActual)
+        public async Task<AlquilerViewDto> CreateAsync(AlquilerCreateDto dto)
         {
+            var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
             int siguienteOrden = await _context.Alquileres.CountAsync() + 1;
 
             var alquiler = new Alquiler
@@ -86,42 +79,22 @@ namespace UCP_HUANCAYO.Services
                 FechaCi = dto.FechaCi,
                 Observacion = dto.Observacion,
                 Activo = true,
-                IdResponsable = dto.IdResponsable
+                IdResponsable = usuarioActual
             };
 
             _context.Alquileres.Add(alquiler);
             await _context.SaveChangesAsync();
 
-            var context = _httpContextAccessor.HttpContext!;
             var detalle = AuditoriaDetalleHelper.GenerarDetalle(alquiler, "Alquiler creado");
+            await _auditoriaHelper.RegistrarAsync("alquiler", alquiler.IdAlquiler, "INSERT", detalle);
 
-            await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                tabla: "alquiler",
-                idRegistro: alquiler.IdAlquiler,
-                accion: "INSERT",
-                detalle: detalle,
-                idUsuario: usuarioActual,
-                context: context
-            );
-
-            return new AlquilerViewDto
-            {
-                IdAlquiler = alquiler.IdAlquiler,
-                IdPredio = alquiler.IdPredio,
-                IdAdministrado = alquiler.IdAdministrado,
-                PeriodoDesde = alquiler.PeriodoDesde,
-                PeriodoHasta = alquiler.PeriodoHasta,
-                Costo = alquiler.Costo,
-                OrdenPago = alquiler.OrdenPago,
-                FechaOrden = alquiler.FechaOrden,
-                Ci = alquiler.Ci,
-                FechaCi = alquiler.FechaCi,
-                Observacion = alquiler.Observacion
-            };
+            return MapToViewDto(alquiler);
         }
 
-        public async Task<AlquilerViewDto?> PatchAsync(Guid id, AlquilerPatchDto dto, Guid usuarioActual)
+        public async Task<AlquilerViewDto?> PatchAsync(Guid id, AlquilerPatchDto dto)
         {
+            var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
             var alquiler = await _context.Alquileres.FindAsync(id);
             if (alquiler == null) return null;
 
@@ -149,38 +122,20 @@ namespace UCP_HUANCAYO.Services
             if (dto.FechaCi.HasValue) alquiler.FechaCi = dto.FechaCi.Value;
             if (dto.Observacion != null) alquiler.Observacion = dto.Observacion;
 
+            alquiler.IdResponsable = usuarioActual;
+
             await _context.SaveChangesAsync();
 
-            var context = _httpContextAccessor.HttpContext!;
             var detalle = AuditoriaDetalleHelper.GenerarCambios(alquilerAntes, alquiler, "Alquiler actualizado parcialmente");
+            await _auditoriaHelper.RegistrarAsync("alquiler", alquiler.IdAlquiler, "PATCH", detalle);
 
-            await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                tabla: "alquiler",
-                idRegistro: alquiler.IdAlquiler,
-                accion: "PATCH",
-                detalle: detalle,
-                idUsuario: usuarioActual,
-                context: context
-            );
-
-            return new AlquilerViewDto
-            {
-                IdAlquiler = alquiler.IdAlquiler,
-                IdPredio = alquiler.IdPredio,
-                IdAdministrado = alquiler.IdAdministrado,
-                PeriodoDesde = alquiler.PeriodoDesde,
-                PeriodoHasta = alquiler.PeriodoHasta,
-                Costo = alquiler.Costo,
-                OrdenPago = alquiler.OrdenPago,
-                FechaOrden = alquiler.FechaOrden,
-                Ci = alquiler.Ci,
-                FechaCi = alquiler.FechaCi,
-                Observacion = alquiler.Observacion
-            };
+            return MapToViewDto(alquiler);
         }
 
-        public async Task<AlquilerViewDto?> UpdateAsync(Guid id, AlquilerUpdateDto dto, Guid usuarioActual)
+        public async Task<AlquilerViewDto?> UpdateAsync(Guid id, AlquilerUpdateDto dto)
         {
+            var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
             var alquiler = await _context.Alquileres.FindAsync(id);
             if (alquiler == null) return null;
 
@@ -209,55 +164,29 @@ namespace UCP_HUANCAYO.Services
             alquiler.Ci = dto.Ci;
             alquiler.FechaCi = dto.FechaCi;
             alquiler.Observacion = dto.Observacion;
+            alquiler.IdResponsable = usuarioActual;
 
             await _context.SaveChangesAsync();
 
-            var context = _httpContextAccessor.HttpContext!;
             var detalle = AuditoriaDetalleHelper.GenerarCambios(alquilerAntes, alquiler, "Alquiler actualizado");
+            await _auditoriaHelper.RegistrarAsync("alquiler", alquiler.IdAlquiler, "UPDATE", detalle);
 
-            await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                tabla: "alquiler",
-                idRegistro: alquiler.IdAlquiler,
-                accion: "UPDATE",
-                detalle: detalle,
-                idUsuario: usuarioActual,
-                context: context
-            );
-
-            return new AlquilerViewDto
-            {
-                IdAlquiler = alquiler.IdAlquiler,
-                IdPredio = alquiler.IdPredio,
-                IdAdministrado = alquiler.IdAdministrado,
-                PeriodoDesde = alquiler.PeriodoDesde,
-                PeriodoHasta = alquiler.PeriodoHasta,
-                Costo = alquiler.Costo,
-                OrdenPago = alquiler.OrdenPago,
-                FechaOrden = alquiler.FechaOrden,
-                Ci = alquiler.Ci,
-                FechaCi = alquiler.FechaCi,
-                Observacion = alquiler.Observacion
-            };
+            return MapToViewDto(alquiler);
         }
 
-        public async Task<bool> DesactivarAsync(Guid id, Guid usuarioActual)
+        public async Task<bool> DesactivarAsync(Guid id)
         {
+            var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
             var alquiler = await _context.Alquileres.FindAsync(id);
             if (alquiler == null) return false;
 
             alquiler.Activo = false;
+            alquiler.IdResponsable = usuarioActual;
             await _context.SaveChangesAsync();
 
-            var context = _httpContextAccessor.HttpContext!;
-            await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                tabla: "alquiler",
-                idRegistro: alquiler.IdAlquiler,
-                accion: "DELETE",
-                detalle: "Alquiler desactivado (Activo=false)",
-                idUsuario: usuarioActual,
-                context: context
-            );
-
+            await _auditoriaHelper.RegistrarAsync("alquiler", alquiler.IdAlquiler, "DELETE", "Alquiler desactivado (Activo=false)");
+            
             return true;
         }
 

@@ -11,13 +11,13 @@ namespace UCP_HUANCAYO.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly AuditoriaHelper _auditoriaHelper;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly UsuarioContextHelper _usuarioContextHelper;
 
-        public ContratoService(ApplicationDbContext context, AuditoriaHelper auditoriaHelper, IHttpContextAccessor httpContextAccessor)
+        public ContratoService(ApplicationDbContext context, AuditoriaHelper auditoriaHelper, UsuarioContextHelper usuarioContextHelper)
         {
             _context = context;
             _auditoriaHelper = auditoriaHelper;
-            _httpContextAccessor = httpContextAccessor;
+            _usuarioContextHelper = usuarioContextHelper;
         }
 
         private List<CronogramaPago> GenerarCronogramaPagos(Guid idContrato, DateTime fechaInicio, int tiempo, Guid idResponsable)
@@ -48,24 +48,29 @@ namespace UCP_HUANCAYO.Services
             return cronogramas;
         }
 
+        private ContratoViewDto MapToViewDto(Contrato c)
+        {
+            return new ContratoViewDto
+            {
+                IdContrato = c.IdContrato,
+                IdPredio = c.IdPredio,
+                IdAdministrado = c.IdAdministrado,
+                Periodo = c.Periodo,
+                Numero = c.Numero,
+                FechaInicia = c.FechaInicia,
+                Tiempo = c.Tiempo,
+                Importe = c.Importe,
+                Agua = c.Agua,
+                Electricidad = c.Electricidad
+            };
+        }
+
         public async Task<IEnumerable<ContratoViewDto>> GetAllAsync()
         {
             return await _context.Contratos
                 .Where(c => c.Activo)
                 .AsNoTracking()
-                .Select(c => new ContratoViewDto
-                {
-                    IdContrato = c.IdContrato,
-                    IdPredio = c.IdPredio,
-                    IdAdministrado = c.IdAdministrado,
-                    Periodo = c.Periodo,
-                    Numero = c.Numero,
-                    FechaInicia = c.FechaInicia,
-                    Tiempo = c.Tiempo,
-                    Importe = c.Importe,
-                    Agua = c.Agua,
-                    Electricidad = c.Electricidad
-                })
+                .Select(c => MapToViewDto(c))
                 .ToListAsync();
         }
 
@@ -105,13 +110,14 @@ namespace UCP_HUANCAYO.Services
                 Importe = contrato.Importe,
                 Agua = contrato.Agua,
                 Electricidad = contrato.Electricidad,
-
                 Cronogramas = cronogramasDto
             };
         }
 
-        public async Task<ContratoViewDto?> CreateAsync(ContratoCreateDto dto, Guid usuarioActual)
+        public async Task<ContratoViewDto?> CreateAsync(ContratoCreateDto dto)
         {
+            var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
             var predio = await _context.Predios
                 .Include(p => p.PredioTipo)
                 .FirstOrDefaultAsync(p => p.IdPredio == dto.IdPredio);
@@ -137,42 +143,23 @@ namespace UCP_HUANCAYO.Services
                 Agua = dto.Agua,
                 Electricidad = dto.Electricidad,
                 Activo = true,
-                IdResponsable = dto.IdResponsable,
-                CronogramasPago = GenerarCronogramaPagos(idContrato, dto.FechaInicia, dto.Tiempo, dto.IdResponsable)
+                IdResponsable = usuarioActual,
+                CronogramasPago = GenerarCronogramaPagos(idContrato, dto.FechaInicia, dto.Tiempo, usuarioActual)
             };
 
             _context.Contratos.Add(contrato);
             await _context.SaveChangesAsync();
 
-            var context = _httpContextAccessor.HttpContext!;
             var detalle = AuditoriaDetalleHelper.GenerarDetalle(contrato, "Contrato creado");
+            await _auditoriaHelper.RegistrarAsync("contrato", contrato.IdContrato, "INSERT", detalle);
 
-            await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                tabla: "contrato",
-                idRegistro: contrato.IdContrato,
-                accion: "INSERT",
-                detalle: detalle,
-                idUsuario: usuarioActual,
-                context: context
-            );
-
-            return new ContratoViewDto
-            {
-                IdContrato = contrato.IdContrato,
-                IdPredio = contrato.IdPredio,
-                IdAdministrado = contrato.IdAdministrado,
-                Periodo = contrato.Periodo,
-                Numero = contrato.Numero,
-                FechaInicia = contrato.FechaInicia,
-                Tiempo = contrato.Tiempo,
-                Importe = contrato.Importe,
-                Agua = contrato.Agua,
-                Electricidad = contrato.Electricidad
-            };
+            return MapToViewDto(contrato);
         }
 
-        public async Task<ContratoViewDto?> PatchAsync(Guid id, ContratoPatchDto dto, Guid usuarioActual)
+        public async Task<ContratoViewDto?> PatchAsync(Guid id, ContratoPatchDto dto)
         {
+            var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
             var contrato = await _context.Contratos
                 .Include(c => c.CronogramasPago)
                 .FirstOrDefaultAsync(c => c.IdContrato == id);
@@ -206,37 +193,19 @@ namespace UCP_HUANCAYO.Services
             if (dto.Agua.HasValue) contrato.Agua = dto.Agua.Value;
             if (dto.Electricidad.HasValue) contrato.Electricidad = dto.Electricidad.Value;
 
+            contrato.IdResponsable = usuarioActual;
             await _context.SaveChangesAsync();
 
-            var context = _httpContextAccessor.HttpContext!;
             var detalle = AuditoriaDetalleHelper.GenerarCambios(contratoAntes, contrato, "Contrato actualizado parcialmente");
+            await _auditoriaHelper.RegistrarAsync("contrato", contrato.IdContrato, "PATCH", detalle);
 
-            await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                tabla: "contrato",
-                idRegistro: contrato.IdContrato,
-                accion: "PATCH",
-                detalle: detalle,
-                idUsuario: usuarioActual,
-                context: context
-            );
-
-            return new ContratoViewDto
-            {
-                IdContrato = contrato.IdContrato,
-                IdPredio = contrato.IdPredio,
-                IdAdministrado = contrato.IdAdministrado,
-                Periodo = contrato.Periodo,
-                Numero = contrato.Numero,
-                FechaInicia = contrato.FechaInicia,
-                Tiempo = contrato.Tiempo,
-                Importe = contrato.Importe,
-                Agua = contrato.Agua,
-                Electricidad = contrato.Electricidad
-            };
+            return MapToViewDto(contrato);
         }
 
-        public async Task<ContratoViewDto?> UpdateAsync(Guid id, ContratoUpdateDto dto, Guid usuarioActual)
+        public async Task<ContratoViewDto?> UpdateAsync(Guid id, ContratoUpdateDto dto)
         {
+            var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
             var contrato = await _context.Contratos
                 .Include(c => c.CronogramasPago)
                 .FirstOrDefaultAsync(c => c.IdContrato == id);
@@ -269,38 +238,20 @@ namespace UCP_HUANCAYO.Services
             contrato.Importe = dto.Importe;
             contrato.Agua = dto.Agua;
             contrato.Electricidad = dto.Electricidad;
+            contrato.IdResponsable = usuarioActual;
 
             await _context.SaveChangesAsync();
 
-            var context = _httpContextAccessor.HttpContext!;
             var detalle = AuditoriaDetalleHelper.GenerarCambios(contratoAntes, contrato, "Contrato actualizado");
+            await _auditoriaHelper.RegistrarAsync("contrato", contrato.IdContrato, "UPDATE", detalle);
 
-            await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                tabla: "contrato",
-                idRegistro: contrato.IdContrato,
-                accion: "UPDATE",
-                detalle: detalle,
-                idUsuario: usuarioActual,
-                context: context
-            );
-
-            return new ContratoViewDto
-            {
-                IdContrato = contrato.IdContrato,
-                IdPredio = contrato.IdPredio,
-                IdAdministrado = contrato.IdAdministrado,
-                Periodo = contrato.Periodo,
-                Numero = contrato.Numero,
-                FechaInicia = contrato.FechaInicia,
-                Tiempo = contrato.Tiempo,
-                Importe = contrato.Importe,
-                Agua = contrato.Agua,
-                Electricidad = contrato.Electricidad
-            };
+            return MapToViewDto(contrato);
         }
 
-        public async Task<bool> DesactivarAsync(Guid id, Guid usuarioActual)
+        public async Task<bool> DesactivarAsync(Guid id)
         {
+            var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
             var contrato = await _context.Contratos
                 .Include(c => c.CronogramasPago)
                 .FirstOrDefaultAsync(c => c.IdContrato == id);
@@ -308,23 +259,18 @@ namespace UCP_HUANCAYO.Services
             if (contrato == null) return false;
 
             contrato.Activo = false;
+            contrato.IdResponsable = usuarioActual;
+
             foreach (var cronograma in contrato.CronogramasPago)
             {
                 cronograma.Activo = false;
+                cronograma.IdResponsable = usuarioActual;
             }
 
             await _context.SaveChangesAsync();
 
-            var context = _httpContextAccessor.HttpContext!;
-            await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                tabla: "Contrato",
-                idRegistro: contrato.IdContrato,
-                accion: "DELETE",
-                detalle: "Contrato desactivado (Activo=false)",
-                idUsuario: usuarioActual,
-                context: context
-            );
-
+            await _auditoriaHelper.RegistrarAsync("contrato", contrato.IdContrato, "DELETE", "Contrato desactivado (Activo=false)");
+            
             return true;
         }
 

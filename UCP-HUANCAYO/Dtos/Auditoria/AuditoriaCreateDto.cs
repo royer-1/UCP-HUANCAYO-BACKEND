@@ -16,24 +16,5 @@ namespace UCP_HUANCAYO.Dtos.Auditoria
 
         [MaxLength]
         public string? Detalle { get; set; }
-
-        [Required]
-        public Guid IdUsuario { get; set; }
-
-        [Required]
-        [StringLength(100)]
-        public string Conexion { get; set; } = string.Empty;
-
-        [Required]
-        [StringLength(100)]
-        public string ClienteNetAddress { get; set; } = string.Empty;
-
-        [Required]
-        [StringLength(20)]
-        public string SessionId { get; set; } = string.Empty;
-
-        [Required]
-        [StringLength(100)]
-        public string LoginName { get; set; } = string.Empty;
     }
 }

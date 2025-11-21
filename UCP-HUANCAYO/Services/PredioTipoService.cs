@@ -11,13 +11,23 @@ namespace UCP_HUANCAYO.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly AuditoriaHelper _auditoriaHelper;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly UsuarioContextHelper _usuarioContextHelper;
 
-        public PredioTipoService(ApplicationDbContext context, AuditoriaHelper auditoriaHelper, IHttpContextAccessor httpContextAccessor)
+        public PredioTipoService(ApplicationDbContext context, AuditoriaHelper auditoriaHelper, UsuarioContextHelper usuarioContextHelper)
         {
             _context = context;
             _auditoriaHelper = auditoriaHelper;
-            _httpContextAccessor = httpContextAccessor;
+            _usuarioContextHelper = usuarioContextHelper;
+        }
+
+        private PredioTipoViewDto MapToViewDto(PredioTipo t)
+        {
+            return new PredioTipoViewDto
+            {
+                IdPredioTipo = t.IdPredioTipo,
+                NombreTipo = t.NombreTipo,
+                Contrato = t.Contrato
+            };
         }
 
         public async Task<List<PredioTipoViewDto>> GetAllAsync()
@@ -25,12 +35,7 @@ namespace UCP_HUANCAYO.Services
             return await _context.PredioTipos
                 .Where(t => t.Activo)
                 .AsNoTracking()
-                .Select(t => new PredioTipoViewDto
-                {
-                    IdPredioTipo = t.IdPredioTipo,
-                    NombreTipo = t.NombreTipo,
-                    Contrato = t.Contrato
-                })
+                .Select(t => MapToViewDto(t))
                 .ToListAsync();
         }
 
@@ -39,51 +44,36 @@ namespace UCP_HUANCAYO.Services
             return await _context.PredioTipos
                 .Where(t => t.IdPredioTipo == id)
                 .AsNoTracking()
-                .Select(t => new PredioTipoViewDto
-                {
-                    IdPredioTipo = t.IdPredioTipo,
-                    NombreTipo = t.NombreTipo,
-                    Contrato = t.Contrato
-                })
+                .Select(t => MapToViewDto(t))
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<PredioTipoViewDto> CreateAsync(PredioTipoCreateDto dto, Guid usuarioActual)
+        public async Task<PredioTipoViewDto> CreateAsync(PredioTipoCreateDto dto)
         {
+            var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
             var tipo = new PredioTipo
             {
                 IdPredioTipo = Guid.NewGuid(),
                 NombreTipo = dto.NombreTipo,
                 Contrato = dto.Contrato,
-                IdResponsable = dto.IdResponsable,
+                IdResponsable = usuarioActual,
                 Activo = true
             };
 
             _context.PredioTipos.Add(tipo);
             await _context.SaveChangesAsync();
 
-            var context = _httpContextAccessor.HttpContext!;
             var detalle = AuditoriaDetalleHelper.GenerarDetalle(tipo, "PredioTipo creado");
+            await _auditoriaHelper.RegistrarAsync("predio_tipo", tipo.IdPredioTipo, "INSERT", detalle);
 
-            await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                tabla: "predio_tipo",
-                idRegistro: tipo.IdPredioTipo,
-                accion: "INSERT",
-                detalle: detalle,
-                idUsuario: usuarioActual,
-                context: context
-            );
-
-            return new PredioTipoViewDto
-            {
-                IdPredioTipo = tipo.IdPredioTipo,
-                NombreTipo = tipo.NombreTipo,
-                Contrato = tipo.Contrato
-            };
+            return MapToViewDto(tipo);
         }
 
-        public async Task<PredioTipoViewDto?> UpdateAsync(Guid id, PredioTipoUpdateDto dto, Guid usuarioActual)
+        public async Task<PredioTipoViewDto?> UpdateAsync(Guid id, PredioTipoUpdateDto dto)
         {
+            var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
             var tipo = await _context.PredioTipos.FindAsync(id);
             if (tipo == null) return null;
 
@@ -98,47 +88,30 @@ namespace UCP_HUANCAYO.Services
 
             tipo.NombreTipo = dto.NombreTipo;
             tipo.Contrato = dto.Contrato;
+            tipo.IdResponsable = usuarioActual;
 
             await _context.SaveChangesAsync();
 
-            var context = _httpContextAccessor.HttpContext!;
             var detalle = AuditoriaDetalleHelper.GenerarCambios(tipoAntes, tipo, "PredioTipo actualizado");
+            await _auditoriaHelper.RegistrarAsync("predio_tipo", tipo.IdPredioTipo, "UPDATE", detalle);
 
-            await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                tabla: "predio_tipo",
-                idRegistro: tipo.IdPredioTipo,
-                accion: "UPDATE",
-                detalle: detalle,
-                idUsuario: usuarioActual,
-                context: context
-            );
-
-            return new PredioTipoViewDto
-            {
-                IdPredioTipo = tipo.IdPredioTipo,
-                NombreTipo = tipo.NombreTipo,
-                Contrato = tipo.Contrato
-            };
+            return MapToViewDto(tipo);
         }
 
-        public async Task<bool> DesactivarAsync(Guid id, Guid usuarioActual)
+        public async Task<bool> DesactivarAsync(Guid id)
         {
+            var usuarioActual = _usuarioContextHelper.GetUsuarioActual();
+
             var tipo = await _context.PredioTipos.FindAsync(id);
             if (tipo == null) return false;
 
             tipo.Activo = false;
+            tipo.IdResponsable = usuarioActual;
+
             await _context.SaveChangesAsync();
 
-            var context = _httpContextAccessor.HttpContext!;
-            await _auditoriaHelper.RegistrarDesdeContextoAsync(
-                tabla: "predio_tipo",
-                idRegistro: tipo.IdPredioTipo,
-                accion: "DELETE",
-                detalle: "PredioTipo desactivado (Activo=false)",
-                idUsuario: usuarioActual,
-                context: context
-            );
-
+            await _auditoriaHelper.RegistrarAsync("predio_tipo", tipo.IdPredioTipo, "DELETE", "PredioTipo desactivado (Activo=false)");
+            
             return true;
         }
     }
