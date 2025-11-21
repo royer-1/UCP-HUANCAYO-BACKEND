@@ -63,8 +63,7 @@ namespace UCP_HUANCAYO.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(UsuarioCreateDto dto)
         {
-            var usuarioActual = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var result = await _service.CreateAsync(dto, usuarioActual);
+            var result = await _service.CreateAsync(dto);
             return Ok(new { message = "El usuario fue creado correctamente", usuario = result });
         }
 
@@ -72,8 +71,7 @@ namespace UCP_HUANCAYO.Controllers
         [HttpPatch("{id}")]
         public async Task<IActionResult> Patch(Guid id, UsuarioPatchDto dto)
         {
-            var usuarioActual = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var result = await _service.PatchAsync(id, dto, usuarioActual);
+            var result = await _service.PatchAsync(id, dto);
             if (result == null) return NotFound();
             return Ok(new { message = "El usuario fue actualizado parcialmente", usuario = result });
         }
@@ -82,8 +80,7 @@ namespace UCP_HUANCAYO.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult> Update(Guid id, UsuarioUpdateDto dto)
         {
-            var usuarioActual = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var result = await _service.UpdateAsync(id, dto, usuarioActual);
+            var result = await _service.UpdateAsync(id, dto);
             if (result == null) return NotFound();
             return Ok(new { message = "El usuario se actualizado correctamente", usuario = result });
         }
@@ -92,8 +89,7 @@ namespace UCP_HUANCAYO.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Desactivar(Guid id)
         {
-            var usuarioActual = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var success = await _service.DesactivarAsync(id, usuarioActual);
+            var success = await _service.DesactivarAsync(id);
             if (!success) return NotFound();
             return Ok(new { message = "El usuario fue desactivado correctamente." });
         }
