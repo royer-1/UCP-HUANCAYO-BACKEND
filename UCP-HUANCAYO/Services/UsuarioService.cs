@@ -28,7 +28,7 @@ namespace UCP_HUANCAYO.Services
                 .FirstOrDefaultAsync(u => u.Alias == alias && u.Clave == claveBytes && u.Activo);
         }
 
-        private UsuarioViewDto MapToViewDto(Usuario u)
+        private static UsuarioViewDto MapToViewDto(Usuario u)
         {
             return new UsuarioViewDto
             {

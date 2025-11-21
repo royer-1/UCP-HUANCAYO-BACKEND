@@ -19,7 +19,7 @@ namespace UCP_HUANCAYO.Services
             _usuarioContextHelper = usuarioContextHelper;
         }
 
-        private DominioViewDto MapToViewDto(Dominio d)
+        private static DominioViewDto MapToViewDto(Dominio d)
         {
             return new DominioViewDto
             {

@@ -48,7 +48,7 @@ namespace UCP_HUANCAYO.Services
             return cronogramas;
         }
 
-        private ContratoViewDto MapToViewDto(Contrato c)
+        private static ContratoViewDto MapToViewDto(Contrato c)
         {
             return new ContratoViewDto
             {

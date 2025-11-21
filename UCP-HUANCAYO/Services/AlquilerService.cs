@@ -20,7 +20,7 @@ namespace UCP_HUANCAYO.Services
             _usuarioContextHelper = usuarioContextHelper;
         }
 
-        private AlquilerViewDto MapToViewDto(Alquiler a)
+        private static AlquilerViewDto MapToViewDto(Alquiler a)
         {
             return new AlquilerViewDto
             {

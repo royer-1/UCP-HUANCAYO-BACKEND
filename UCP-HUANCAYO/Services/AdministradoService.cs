@@ -20,7 +20,7 @@
                 _usuarioContextHelper = usuarioContextHelper;
             }
 
-            private AdministradoViewDto MapToViewDto(Administrado a)
+            private static AdministradoViewDto MapToViewDto(Administrado a)
             {
                 return new AdministradoViewDto
                 {

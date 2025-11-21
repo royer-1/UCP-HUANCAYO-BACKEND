@@ -28,6 +28,8 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<AuditoriaHelper>();
 builder.Services.AddHttpContextAccessor();
 
+builder.Services.AddScoped<UsuarioContextHelper>();
+
 // DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

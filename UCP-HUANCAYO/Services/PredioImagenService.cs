@@ -20,7 +20,7 @@ namespace UCP_HUANCAYO.Services
             _usuarioContextHelper = usuarioContextHelper;
         }
 
-        private PredioImagenViewDto MapToViewDto(PredioImagen i)
+        private static PredioImagenViewDto MapToViewDto(PredioImagen i)
         {
             return new PredioImagenViewDto
             {

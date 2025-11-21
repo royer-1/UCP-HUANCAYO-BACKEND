@@ -20,7 +20,7 @@ namespace UCP_HUANCAYO.Services
             _usuarioContextHelper = usuarioContextHelper;
         }
 
-        private CronogramaPagoViewDto MapToViewDto(CronogramaPago c)
+        private static CronogramaPagoViewDto MapToViewDto(CronogramaPago c)
         {
             return new CronogramaPagoViewDto
             {
