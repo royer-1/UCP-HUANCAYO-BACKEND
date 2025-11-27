@@ -39,7 +39,7 @@ namespace UCP_HUANCAYO.Controllers
         public async Task<ActionResult> Create(PredioCreateDto dto)
         {
             var result = await _service.CreateAsync(dto);
-            return Ok(new { message = "El predio fue creado correctamente", predio = result });
+            return Ok(result);
         }
 
         [Authorize(Policy = "SoloGestores")]
@@ -48,7 +48,7 @@ namespace UCP_HUANCAYO.Controllers
         {
             var result = await _service.PatchAsync(id, dto);
             if (result == null) return NotFound();
-            return Ok(new { message = "El predio fue actualizado parcialmente", predio = result });
+            return Ok(result);
         }
 
         [Authorize(Policy = "SoloGestores")]
@@ -57,7 +57,7 @@ namespace UCP_HUANCAYO.Controllers
         {
             var result = await _service.UpdateAsync(id, dto);
             if (result == null) return NotFound();
-            return Ok(new { message = "El predio fue actualizado correctamente", predio = result });
+            return Ok(result);
         }
 
         [Authorize(Policy = "SoloGestores")]

@@ -206,11 +206,17 @@ namespace UCP_HUANCAYO.Services
             var detalle = AuditoriaDetalleHelper.GenerarCambios(predioAntes, predio, "Predio actualizado parcialmente");
             await _auditoriaHelper.RegistrarAsync("predio", predio.IdPredio, "PATCH", detalle);
 
+            var tipo = await _context.PredioTipos
+                .Where(t => t.IdPredioTipo == predio.IdPredioTipo)
+                .Select(t => t.NombreTipo)
+                .FirstOrDefaultAsync();
+
             return new PredioViewDto
             {
                 IdPredio = predio.IdPredio,
                 IdPredioTipo = predio.IdPredioTipo,
                 NombrePredio = predio.NombrePredio,
+                NombreTipo = tipo,
                 Descripcion = predio.Descripcion,
                 AreaPredio = predio.AreaPredio,
                 Capacidad = predio.Capacidad,

@@ -40,7 +40,7 @@ namespace UCP_HUANCAYO.Controllers
         {
             var result = await _service.CreateAsync(dto);
             if (result == null) return NotFound("Predio no encontrado.");
-            return Ok(new { message = "Imagen agregada correctamente", imagen = result });
+            return Ok(result);
         }
 
         [Authorize(Policy = "SoloGestores")]
@@ -49,7 +49,7 @@ namespace UCP_HUANCAYO.Controllers
         {
             var result = await _service.UpdateAsync(id, dto);
             if (result == null) return NotFound();
-            return Ok(new { message = "Imagen actualizada correctamente", imagen = result });
+            return Ok(result);
         }
 
         [Authorize(Policy = "SoloGestores")]

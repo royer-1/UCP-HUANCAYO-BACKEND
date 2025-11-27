@@ -39,7 +39,7 @@ namespace UCP_HUANCAYO.Controllers
         public async Task<ActionResult> Create(AdministradoCreateDto dto)
         {
             var result = await _service.CreateAsync(dto);
-            return Ok(new { message = "El Administrado fue creado correctamente", administrado = result });
+            return Ok(result);
         }
 
         [Authorize(Policy = "SoloGestores")]
@@ -48,7 +48,7 @@ namespace UCP_HUANCAYO.Controllers
         {
             var result = await _service.PatchAsync(id, dto);
             if (result == null) return NotFound();
-            return Ok(new { message = "El administrado fue actualizado parcialmente", administrado = result });
+            return Ok(result);
         }
 
         [Authorize(Policy = "SoloGestores")]
@@ -56,8 +56,8 @@ namespace UCP_HUANCAYO.Controllers
         public async Task<ActionResult> Update(Guid id, AdministradoUpdateDto dto)
         {
             var result = await _service.UpdateAsync(id, dto);
-            if (result == null) return NotFound();  
-            return Ok(new { message = "El Administrado se actualizado correctamente", administrado = result });
+            if (result == null) return NotFound();
+            return Ok(result);
         }
 
         [Authorize(Policy = "SoloGestores")]

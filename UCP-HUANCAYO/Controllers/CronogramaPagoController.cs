@@ -43,7 +43,7 @@ namespace UCP_HUANCAYO.Controllers
         {
             var result = await _service.CreateAsync(dto);
             if (result == null) return BadRequest("Contrato no encontrado o inactivo.");
-            return Ok(new { message = "Cronograma creado correctamente", cronograma = result });
+            return Ok(result);
         }
 
         [Authorize(Policy = "SoloGestores")]
@@ -52,7 +52,7 @@ namespace UCP_HUANCAYO.Controllers
         {
             var result = await _service.PatchAsync(id, dto);
             if (result == null) return BadRequest("Este cronograma ya fue pagado y no puede ser editado.");
-            return Ok(new { message = "Cronograma actualizado parcialmente", cronograma = result });
+            return Ok(result);
         }
 
         [Authorize(Policy = "SoloGestores")]
@@ -61,7 +61,7 @@ namespace UCP_HUANCAYO.Controllers
         {
             var result = await _service.UpdateAsync(id, dto);
             if (result == null) return BadRequest("Este cronograma ya fue pagado y no puede ser editado.");
-            return Ok(new { message = "Cronograma actualizado correctamente", cronograma = result });
+            return Ok(result);
         }
 
         [Authorize(Policy = "SoloGestores")]

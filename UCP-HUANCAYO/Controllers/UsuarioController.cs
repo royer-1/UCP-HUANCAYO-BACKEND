@@ -64,7 +64,7 @@ namespace UCP_HUANCAYO.Controllers
         public async Task<ActionResult> Create(UsuarioCreateDto dto)
         {
             var result = await _service.CreateAsync(dto);
-            return Ok(new { message = "El usuario fue creado correctamente", usuario = result });
+            return Ok(result);
         }
 
         [Authorize(Policy = "SoloAdministradores")]
@@ -73,7 +73,7 @@ namespace UCP_HUANCAYO.Controllers
         {
             var result = await _service.PatchAsync(id, dto);
             if (result == null) return NotFound();
-            return Ok(new { message = "El usuario fue actualizado parcialmente", usuario = result });
+            return Ok(result);
         }
 
         [Authorize(Policy = "SoloAdministradores")]
@@ -82,7 +82,7 @@ namespace UCP_HUANCAYO.Controllers
         {
             var result = await _service.UpdateAsync(id, dto);
             if (result == null) return NotFound();
-            return Ok(new { message = "El usuario se actualizado correctamente", usuario = result });
+            return Ok(result);
         }
 
         [Authorize(Policy = "SoloAdministradores")]

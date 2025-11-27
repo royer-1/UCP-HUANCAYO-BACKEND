@@ -42,7 +42,7 @@ namespace UCP_HUANCAYO.Controllers
             if (result == null)
                 return BadRequest("El predio no existe o es un auditorio. Usa Alquiler en su lugar.");
 
-            return Ok(new { message = "El contrato fue creado correctamente", contrato = result });
+            return Ok(result);
         }
 
         [Authorize(Policy = "SoloGestores")]
@@ -53,7 +53,7 @@ namespace UCP_HUANCAYO.Controllers
             if (result == null)
                 return BadRequest("Este contrato ya fue pagado completamente y no puede ser editado.");
 
-            return Ok(new { message = "Contrato actualizado parcialmente", contrato = result });
+            return Ok(result);
         }
 
         [Authorize(Policy = "SoloGestores")]
@@ -64,7 +64,7 @@ namespace UCP_HUANCAYO.Controllers
             if (result == null)
                 return BadRequest("Este contrato ya fue pagado completamente y no puede ser editado.");
 
-            return Ok(new { message = "Contrato actualizado correctamente", contrato = result });
+            return Ok(result);
         }
 
         [Authorize(Policy = "SoloGestores")]

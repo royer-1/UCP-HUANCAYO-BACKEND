@@ -12,6 +12,17 @@ using UCP_HUANCAYO.Services.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngular",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:4200") 
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
+
 // Servicios de negocio
 builder.Services.AddScoped<AdministradoService>();
 builder.Services.AddScoped<AlquilerService>();
@@ -133,6 +144,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
+
+app.UseCors("AllowAngular");
 
 // Middleware en orden correcto
 if (app.Environment.IsDevelopment())
