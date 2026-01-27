@@ -106,14 +106,21 @@ namespace UCP_HUANCAYO.Services
             {
                 foreach (var img in dto.ImagenesPredio)
                 {
-                    var imagen = new PredioImagen
+                    if (!string.IsNullOrWhiteSpace(img))
                     {
-                        IdImagen = Guid.NewGuid(),
-                        IdPredio = predio.IdPredio,
-                        Imagen = img,
-                        Activo = true
-                    };
-                    _context.PredioImagenes.Add(imagen);
+                        var prefijo = "data:image/png;base64,";
+                        var imagenBase64 = img.StartsWith("data:image/") ? img : prefijo + img;
+
+                        var imagen = new PredioImagen
+                        {
+                            IdImagen = Guid.NewGuid(),
+                            IdPredio = predio.IdPredio,
+                            Imagen = imagenBase64,
+                            Activo = true
+                        };
+
+                        _context.PredioImagenes.Add(imagen);
+                    }
                 }
             }
 

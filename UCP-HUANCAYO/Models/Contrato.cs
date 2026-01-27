@@ -18,8 +18,6 @@ namespace UCP_HUANCAYO.Models
 
         [Column("id_administrado")]
         public Guid IdAdministrado { get; set; }
-
-        [ForeignKey("IdAdministrado")]
         public Administrado? Administrado { get; set; }
 
         [Column("periodo")]

@@ -38,8 +38,26 @@ namespace UCP_HUANCAYO.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(PredioCreateDto dto)
         {
-            var result = await _service.CreateAsync(dto);
-            return Ok(result);
+            try
+            {
+                if (dto.ImagenesPredio != null)
+                {
+                    foreach (var base64 in dto.ImagenesPredio)
+                    {
+                        if (string.IsNullOrWhiteSpace(base64))
+                        {
+                            return BadRequest(new { error = "Una de las imágenes está vacía o mal formada." });
+                        }
+                    }
+                }
+
+                var result = await _service.CreateAsync(dto);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
 
         [Authorize(Policy = "SoloGestores")]
@@ -61,7 +79,7 @@ namespace UCP_HUANCAYO.Controllers
         }
 
         [Authorize(Policy = "SoloGestores")]
-        [HttpDelete("{id}")]
+        [HttpPatch("{id}/desactivar")]
         public async Task<IActionResult> Desactivar(Guid id)
         {
             var success = await _service.DesactivarAsync(id);

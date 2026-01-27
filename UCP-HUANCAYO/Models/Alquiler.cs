@@ -12,7 +12,6 @@ namespace UCP_HUANCAYO.Models
 
         [Column("id_predio")]
         public Guid IdPredio { get; set; }
-
         public Predio? Predio { get; set; }
 
         [Column("id_administrado")]

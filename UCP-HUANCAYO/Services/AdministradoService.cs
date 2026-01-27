@@ -104,7 +104,6 @@
                     Activo = administrado.Activo
                 };
 
-                if (dto.RazonSocial != null) administrado.RazonSocial = dto.RazonSocial;
                 if (dto.Telefono != null) administrado.Telefono = dto.Telefono;
                 if (dto.Correo != null) administrado.Correo = Encoding.UTF8.GetBytes(dto.Correo);
                 if (dto.Direccion != null) administrado.Direccion = dto.Direccion;

@@ -55,6 +55,9 @@ namespace UCP_HUANCAYO.Services
                 IdContrato = c.IdContrato,
                 IdPredio = c.IdPredio,
                 IdAdministrado = c.IdAdministrado,
+                NombrePredio = c.Predio?.NombrePredio,
+                DocIdentTipo = c.Administrado?.DocIdentTipo,
+                DocIdentNro = c.Administrado?.DocIdentNro,
                 Periodo = c.Periodo,
                 Numero = c.Numero,
                 FechaInicia = c.FechaInicia,
@@ -68,6 +71,8 @@ namespace UCP_HUANCAYO.Services
         public async Task<IEnumerable<ContratoViewDto>> GetAllAsync()
         {
             return await _context.Contratos
+                .Include(a => a.Predio)
+                .Include(a => a.Administrado)
                 .Where(c => c.Activo)
                 .AsNoTracking()
                 .Select(c => MapToViewDto(c))
@@ -77,6 +82,8 @@ namespace UCP_HUANCAYO.Services
         public async Task<ContratoDetalleDto?> GetByIdAsync(Guid id)
         {
             var contrato = await _context.Contratos
+                .Include(a => a.Predio)
+                .Include(a => a.Administrado)
                 .Include(c => c.CronogramasPago)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.IdContrato == id);
@@ -122,7 +129,7 @@ namespace UCP_HUANCAYO.Services
                 .Include(p => p.PredioTipo)
                 .FirstOrDefaultAsync(p => p.IdPredio == dto.IdPredio);
 
-            if (predio == null || predio.PredioTipo.NombreTipo.ToLower().Contains("auditorio"))
+            if (predio == null || predio.PredioTipo.NombreTipo.ToLower().Contains("auditorios"))
                 return null;
 
             int numeroContrato = await _context.Contratos.CountAsync() + 1;

@@ -65,7 +65,7 @@ namespace UCP_HUANCAYO.Controllers
         }
 
         [Authorize(Policy = "SoloGestores")]
-        [HttpDelete("{id}")]
+        [HttpPatch("{id}/desactivar")]
         public async Task<IActionResult> Desactivar(Guid id)
         {
             var success = await _service.DesactivarAsync(id);

@@ -50,9 +50,8 @@ namespace UCP_HUANCAYO.Controllers
             if (result == null) return NotFound();
             return Ok(result);
         }
-
         [Authorize(Policy = "SoloGestores")]
-        [HttpDelete("{id}")]
+        [HttpPatch("{id}/desactivar")]
         public async Task<ActionResult> Desactivar(Guid id)
         {
             var success = await _service.DesactivarAsync(id);

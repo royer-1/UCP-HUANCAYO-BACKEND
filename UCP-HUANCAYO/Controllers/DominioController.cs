@@ -61,7 +61,7 @@ namespace UCP_HUANCAYO.Controllers
         }
 
         [Authorize(Policy = "SuperAdministradores")]
-        [HttpDelete("{id}")]
+        [HttpPatch("{id}/desactivar")]
         public async Task<IActionResult> Desactivar(Guid id)
         {
             var success = await _service.DesactivarAsync(id);

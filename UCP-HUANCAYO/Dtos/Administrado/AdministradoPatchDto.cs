@@ -4,9 +4,6 @@ namespace UCP_HUANCAYO.Dtos.Administrado
 {
     public class AdministradoPatchDto
     {
-        [StringLength(100)]
-        public string? RazonSocial { get; set; }
-
         [StringLength(20)]
         public string? Telefono { get; set; }
 

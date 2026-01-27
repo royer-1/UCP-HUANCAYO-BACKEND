@@ -8,6 +8,8 @@ namespace UCP_HUANCAYO.Dtos.Alquiler
         public Guid IdPredio { get; set; }
         public Guid IdAdministrado { get; set; }
         public string? NombrePredio { get; set; }
+        public string? DocIdentTipo { get; set; } 
+        public string? DocIdentNro { get; set; }
         public DateTime PeriodoDesde { get; set; }
         public DateTime PeriodoHasta { get; set; }
         public decimal Costo { get; set; }

@@ -7,6 +7,9 @@ namespace UCP_HUANCAYO.Dtos.Contrato
         public Guid IdContrato { get; set; }
         public Guid IdPredio { get; set; }
         public Guid IdAdministrado { get; set; }
+        public string? NombrePredio { get; set; }
+        public string? DocIdentTipo { get; set; }
+        public string? DocIdentNro { get; set; }
         public string? Periodo { get; set; }
         public int Numero { get; set; }
         public DateTime FechaInicia { get; set; }

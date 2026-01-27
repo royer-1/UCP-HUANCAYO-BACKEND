@@ -28,6 +28,8 @@ namespace UCP_HUANCAYO.Services
                 IdPredio = a.IdPredio,
                 IdAdministrado = a.IdAdministrado,
                 NombrePredio = a.Predio?.NombrePredio,
+                DocIdentTipo = a.Administrado?.DocIdentTipo,
+                DocIdentNro = a.Administrado?.DocIdentNro,
                 PeriodoDesde = a.PeriodoDesde,
                 PeriodoHasta = a.PeriodoHasta,
                 Costo = a.Costo,
@@ -43,6 +45,7 @@ namespace UCP_HUANCAYO.Services
         {
             return await _context.Alquileres
                 .Include(a => a.Predio)
+                .Include(a => a.Administrado)
                 .Where(a => a.Activo)
                 .AsNoTracking()
                 .Select(a => MapToViewDto(a))
@@ -53,6 +56,7 @@ namespace UCP_HUANCAYO.Services
         {
             return await _context.Alquileres
                 .Include(a => a.Predio)
+                .Include(a => a.Administrado)
                 .Where(a => a.IdAlquiler == id)
                 .AsNoTracking()
                 .Select(a => MapToViewDto(a))
@@ -88,7 +92,13 @@ namespace UCP_HUANCAYO.Services
             var detalle = AuditoriaDetalleHelper.GenerarDetalle(alquiler, "Alquiler creado");
             await _auditoriaHelper.RegistrarAsync("alquiler", alquiler.IdAlquiler, "INSERT", detalle);
 
-            return MapToViewDto(alquiler);
+            var alquilerCompleto = await _context.Alquileres
+                .Include(a => a.Predio)
+                .Include(a => a.Administrado)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(a => a.IdAlquiler == alquiler.IdAlquiler);
+
+            return MapToViewDto(alquilerCompleto);
         }
 
         public async Task<AlquilerViewDto?> PatchAsync(Guid id, AlquilerPatchDto dto)
